@@ -16,9 +16,10 @@ C++
     mettre en place rotation des logs (size nbre fichier)
 
 4- Gestion Config 
-    format (YAML)
-    charger et parser config au demarrage 
-    permettre le rchargement dynamique
+    format (YAML) 
+    list parametre proposer fichier 
+    charger et PARSER FICHIER de config au demarrage 
+    permettre le rechargement dynamique
 
 5- Interface user / controller 
     en ligne de commande (start stop statut etc)
@@ -32,17 +33,25 @@ supervisord -> Gerer plusieurs processus : permet de lancer plusieurs services d
 
 
 
-pid_t pid = fork() -- neg fork echoue -- 0 on est dans processus fils -- + dans processus parents
+pid_t pid = fork() 
+-- neg fork echoue 
+-- 0 on est dans processus fils 
+-- + dans processus parents
+
+exec() - execlp() - execvp()
+remplace procesus enfant par une commande reelle 
+
+waitpid()
+dans parents attende qu un enfant meure et dit pourquoi 
+
+signal()
+intercepter signaux SIGCHLD ou SIGTERM
+
+
 
 std::thread 
 
 kill(pid, 0)
-
-
-
-
-
-
 
 BASE de C++
 :: Classes :: 
@@ -254,3 +263,6 @@ public, accessible depuis l'exterieur
 
     empty() - size() - insert() - erase() - clear() - begin() / end() - find()
     
+
+    Surcharge de l'opérateur (ex : << -> operateur d'insertion utilisee avc le flux std::cout),
+        definir comment il se comporte pour des types personnalisees
