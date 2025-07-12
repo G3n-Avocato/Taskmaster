@@ -16,7 +16,6 @@ struct Config {
     std::string                         stdout;
     std::string                         stderr;
     std::map<std::string, std::string>  env;
-
 };
 
 class Supervisor {
