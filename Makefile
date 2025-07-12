@@ -1,7 +1,7 @@
 NAME = Supervisor
 
 SRCS = logger.cpp 		\
-	  	parcer.cpp 		\
+	  	parser.cpp 		\
 		process.cpp 	\
 		supervisor.cpp 	\
 		main.cpp
