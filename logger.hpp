@@ -1,4 +1,4 @@
-# define LOGGER_HPP
+#ifndef LOGGER_HPP
 # define LOGGER_HPP
 
 class Logger {
