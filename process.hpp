@@ -17,7 +17,7 @@ struct Config {
     std::string                         umask;
     std::string                         workingDir;
     e_autoStatus                        autoStart;
-    e_autoStatus                         autoRestart;
+    e_autoStatus                        autoRestart;
     std::vector<std::string>            exitCodes;
     int                                 startRetries;
     int                                 startTime;
