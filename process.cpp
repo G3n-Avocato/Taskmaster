@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <cstring>
 
-Process::Process(const t_config& config) : _processus(-2), _config(config)
+Process::Process(const t_config& config) : _config(config)
 {
 
 }
@@ -99,7 +99,7 @@ bool Process::startProcess()
     else if (_processus == 0) 
     {
         std::cout << "Child process" << std::endl;
-        umask(_config.umask);
+        //::umask(_config.umask);
         std::vector<char*> argv = buildArgv(_config.cmd);
         std::vector<char*> envp = buildEnvp(_config.env);
         execve(argv[0], argv.data(), envp.data());
@@ -108,6 +108,7 @@ bool Process::startProcess()
         freeCStringVector(envp);
         _exit(EXIT_FAILURE);
     }
+    return false;
 }
 
 bool Process::isProcessUp()
@@ -123,9 +124,9 @@ int Process::stopProcess()
     }
 
     int waited = 0;
-    const int maxWait = _config.stoptime;
+    const int maxWait = _config.stopTime;
 
-    kill(_processus, _custom_sig);
+    kill(_processus, _config.stopSignal);
     while (waited < maxWait)
     {
         if (!isProcessUp())

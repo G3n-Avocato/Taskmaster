@@ -2,7 +2,7 @@
 
 Parser::Parser(void) {}
 
-Parser::Parser(std::string config_file, std::map<std::string, Config> &programs_tab) {
+Parser::Parser(std::string config_file, std::map<std::string, t_config> &programs_tab) {
     YAML::Node  file_node = YAML::LoadFile(config_file);
 
     if (file_node["programs"]) {
@@ -12,8 +12,8 @@ Parser::Parser(std::string config_file, std::map<std::string, Config> &programs_
             
             std::string progName = it->first.as<std::string>();
 
-            Config  conf_struct;
-            if (YAML::convert<Config>::decode(it->second, conf_struct))
+            t_config  conf_struct;
+            if (YAML::convert<t_config>::decode(it->second, conf_struct))
                 programs_tab[progName] = conf_struct;
             else
                 std::cout << "Erreur convert decode YAML to struct config\n";
