@@ -5,7 +5,7 @@
 #include <map>
 #include <vector>
 
-struct Config {
+typedef struct s_config {
     std::string                         cmd;
     int                                 numProcs;
     std::string                         umask;
@@ -20,7 +20,7 @@ struct Config {
     std::string                         stdout;
     std::string                         stderr;
     std::map<std::string, std::string>  env;
-};
+} t_config;
 
 class Process {
     
@@ -31,10 +31,17 @@ class Process {
         Process& operator=(Process const &rhs);
         ~Process(void);
 
+        bool isProcessUp();
+        void stopProcess();
+        void startProcess();
 
     private:
+        std::vector<char*> buildArgv(const std::string& cmd);
+        std::vector<char*> buildEnvp(const std::map<std::string, std::string>& envMap);
+        void freeCStringVector(std::vector<char*>& vec);
+
         std::string _name;
-        Config      _config;
+        t_config      _config;
         pid_t       _processus;
 
 };

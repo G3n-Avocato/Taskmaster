@@ -8,8 +8,8 @@
 
 namespace YAML {
 template<>
-struct convert<Config> {
-    static bool decode(const Node& node, Config& conf) {
+struct convert<t_config> {
+    static bool decode(const Node& node, t_config& conf) {
         if (!node.IsMap())
             return false;
 
@@ -57,7 +57,7 @@ class Parser {
     public:
         
         Parser(void);
-        Parser(std::string config_file, std::map<std::string, Config> &programs_tab);
+        Parser(std::string config_file, std::map<std::string, t_config> &programs_tab);
         ~Parser(void);
     
     private:

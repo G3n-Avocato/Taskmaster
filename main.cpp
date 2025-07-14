@@ -6,7 +6,7 @@ int main (int argc, char** argv) {
     if (argc != 2)
         return (1);
 
-    std::map<std::string, Config>   programs_tab;
+    std::map<std::string, t_config>   programs_tab;
     Parser  parser(argv[1], programs_tab);
 
 
@@ -15,7 +15,7 @@ int main (int argc, char** argv) {
 //PRINT STRUCT TEST                                                //
 /////////////////////////////////////////////////////////////////////
     std::cout << "NB de bloc : " << programs_tab.size() << std::endl;
-    for (std::map<std::string, Config>::iterator it = programs_tab.begin(); it != programs_tab.end(); it++) {
+    for (std::map<std::string, t_config>::iterator it = programs_tab.begin(); it != programs_tab.end(); it++) {
         std::cout << "Program: " << it->first << std::endl;
         std::cout << "\tcmd: " << it->second.cmd << std::endl;
         std::cout << "\tnumProcs: " << it->second.numProcs << std::endl;
