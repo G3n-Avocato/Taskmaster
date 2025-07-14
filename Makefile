@@ -12,13 +12,19 @@ CC = c++
 
 CFLAGS = -Wall -Wextra -Werror
 
+YAML_CPP_DIR = /usr/local/include/yaml-cpp
+YAML_CPP_LIB_DIR = /usr/local/lib
+
+INCLUDES = -I$(YAML_CPP_DIR)/include
+LIBS = -L$(YAML_CPP_LIB_DIR) -lyaml-cpp
+
 all : $(NAME)
 
 $(NAME): $(OBJS)
-	$(CC)  $(OBJS) -o $(NAME)
+	$(CC)  $(OBJS) -o $(NAME) $(LIBS)
 
 %.o : %.cpp
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 clean:
 	$(RM) $(OBJS)

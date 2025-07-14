@@ -1,6 +1,18 @@
 # NOTE Taskmaster
 C++
 
+note laura :
+
+-verifier quel parametre sont obligatoire ? et quel parametre peuvent etre remplacer par une valeur par default
+-reparsing valeur ranger dans struct 
+
+
+
+
+
+
+
+
 1- Implementation de la gestion basique des processus
     lancer un processus enfant avec - FORK()
     surveiller son etat - STD::THREAD
