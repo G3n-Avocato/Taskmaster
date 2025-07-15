@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include <signal.h>
+
 typedef struct s_config {
     std::string                         cmd;
     int                                 numProcs;
@@ -15,7 +16,7 @@ typedef struct s_config {
     std::vector<int>                    exitCodes;
     int                                 startRetries;
     int                                 startTime;
-    std::string                         stopSignal;
+    int                                 stopSignal;
     int                                 stopTime;
     std::string                         stdout;
     std::string                         stderr;

@@ -27,3 +27,26 @@ Parser::Parser(std::string config_file, std::map<std::string, t_config> &program
 Parser::~Parser(void) {
 
 }
+
+int Parser::getSignalNumber(const std::string& name) {
+
+    const std::map<std::string, int>    signalMap = {
+        {"HUP", SIGHUP}, {"INT", SIGINT}, {"QUIT", SIGQUIT},
+        {"ILL", SIGILL}, {"TRAP", SIGTRAP}, {"ABRT", SIGABRT},
+        {"IOT", SIGIOT}, {"BUS", SIGBUS}, {"FPE", SIGFPE},
+        {"KILL", SIGKILL}, {"USR1", SIGUSR1}, {"SEGV", SIGSEGV},
+        {"USR2", SIGUSR2}, {"PIPE", SIGPIPE}, {"ALRM", SIGALRM},
+        {"TERM", SIGTERM}, {"STKFLT", SIGSTKFLT}, {"CHLD", SIGCHLD},
+        {"CONT", SIGCONT}, {"STOP", SIGSTOP}, {"TSTP", SIGTSTP},
+        {"TTIN", SIGTTIN}, {"TTOU", SIGTTOU}, {"URG", SIGURG},
+        {"XCPU", SIGXCPU}, {"XFSZ", SIGXFSZ}, {"VTALRM", SIGVTALRM},
+        {"PROF", SIGPROF}, {"WINCH", SIGWINCH}, {"POLL", SIGPOLL},
+        {"IO", SIGIO}, {"PWR", SIGPWR}, {"SYS", SIGSYS}
+
+    };
+
+    std::map<std::string, int>::const_iterator  it = signalMap.find(name);
+    if (it == signalMap.end())
+        return (-1);
+    return (it->second);
+}

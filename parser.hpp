@@ -3,8 +3,24 @@
 
 #include "process.hpp"
 
+#include <map>
 #include <string>
 #include <yaml-cpp/yaml.h>
+#include <signal.h>
+
+class Parser {
+
+    public:
+        
+        Parser(void);
+        Parser(std::string config_file, std::map<std::string, t_config> &programs_tab);
+        ~Parser(void);
+
+        static int getSignalNumber(const std::string& name);
+    
+    private:
+
+};
 
 namespace YAML {
 template<>
@@ -33,8 +49,11 @@ struct convert<t_config> {
             conf.startRetries = node["startretries"].as<int>();
         if (node["starttime"])
             conf.startTime = node["starttime"].as<int>();
-        if (node["stopsignal"])
-            conf.stopSignal = node["stopsignal"].as<std::string>();
+
+        if (node["stopsignal"]) {
+            std::string tmp = node["stopsignal"].as<std::string>();
+            conf.stopSignal = ::Parser::getSignalNumber(tmp);
+        }
         if (node["stoptime"])
             conf.stopTime = node["stoptime"].as<int>();
         if (node["stdout"])
@@ -50,18 +69,5 @@ struct convert<t_config> {
     }
 };
 }
-
-
-class Parser {
-
-    public:
-        
-        Parser(void);
-        Parser(std::string config_file, std::map<std::string, t_config> &programs_tab);
-        ~Parser(void);
-    
-    private:
-
-};
 
 # endif

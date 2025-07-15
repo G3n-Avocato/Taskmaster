@@ -3,7 +3,8 @@ C++
 
 note laura :
 
--verifier quel parametre sont obligatoire ? et quel parametre peuvent etre remplacer par une valeur par default
+-verifier quel parametre sont obligatoire ? et quel parametre peuvent etre remplacer par une valeur par default ? quel parametre touches au processus et necessite une relance de la cmd reload  
+
 -reparsing valeur ranger dans struct 
 
 
