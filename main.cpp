@@ -6,9 +6,9 @@ int main (int argc, char** argv) {
     if (argc != 2)
         return (1);
 
-    std::map<std::string, t_config>   programs_tab;
-    Parser  parser(argv[1], programs_tab);
-
+    try {
+        std::map<std::string, t_config>   programs_tab;
+        Parser  parser(argv[1], programs_tab);
 
 
 /////////////////////////////////////////////////////////////////////
@@ -44,4 +44,14 @@ int main (int argc, char** argv) {
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 
+    } catch (const Parser::BadParaException &e) {
+        std::cerr << "Error Exception : " << e.what() << std::endl;
+        return (1);
+    } catch (const Parser::RequiredParaException &e) {
+        std::cerr << "Error Exception : " << e.what() << std::endl;
+        return (1);
+    } catch (const YAML::Exception &e) {
+        std::cerr << "Error Exception : " << e.what() << std::endl;
+        return (1);
+    } 
 }

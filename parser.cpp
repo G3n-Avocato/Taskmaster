@@ -3,24 +3,31 @@
 Parser::Parser(void) {}
 
 Parser::Parser(std::string config_file, std::map<std::string, t_config> &programs_tab) {
-    YAML::Node  file_node = YAML::LoadFile(config_file);
+    
+    //try {
+        YAML::Node  file_node = YAML::LoadFile(config_file);
 
-    if (file_node["programs"]) {
-        YAML::Node  programs_node = file_node["programs"];
-        
-        for (YAML::const_iterator it = programs_node.begin(); it != programs_node.end(); it++) {    
-            
-            std::string progName = it->first.as<std::string>();
+        //if (file_node["programs"].IsDefined()) {
+            YAML::Node  programs_node = file_node["programs"];
 
-            t_config  conf_struct;
-            if (YAML::convert<t_config>::decode(it->second, conf_struct))
+            for (YAML::const_iterator it = programs_node.begin(); it != programs_node.end(); it++) {    
+
+                std::string progName = it->first.as<std::string>();
+
+                t_config  conf_struct;
+                YAML::convert<t_config>::decode(it->second, conf_struct);
                 programs_tab[progName] = conf_struct;
-            else
-                std::cout << "Erreur convert decode YAML to struct config\n";
-        }
+            }
 
-    }
-
+        //}
+        //else
+        //    std::cout << "Node programs doesn't exist \n";
+    //} catch (const YAML::BadFile &e) {
+    //    std::cout << "Unable to open YAML file : " << e.what() << std::endl;
+    //    return ;
+    //} catch (const YAML::InvalidNode &e) {
+    //    std::cout << "Invalid node : " << e.what() << std::endl;
+    //    return ;
 
 }
 
@@ -49,4 +56,12 @@ int Parser::getSignalNumber(const std::string& name) {
     if (it == signalMap.end())
         return (-1);
     return (it->second);
+}
+
+const char* Parser::BadParaException::what(void) const throw() {
+    return ("Bad parameter\n");
+}
+
+const char* Parser::RequiredParaException::what(void) const throw() {
+    return ("Required parameter\n");
 }

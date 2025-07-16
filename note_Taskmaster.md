@@ -4,7 +4,6 @@ C++
 note laura :
 
 -verifier quel parametre sont obligatoire ? et quel parametre peuvent etre remplacer par une valeur par default ? quel parametre touches au processus et necessite une relance de la cmd reload  
-
 -reparsing valeur ranger dans struct 
 
 
@@ -279,3 +278,52 @@ public, accessible depuis l'exterieur
 
     Surcharge de l'opérateur (ex : << -> operateur d'insertion utilisee avc le flux std::cout),
         definir comment il se comporte pour des types personnalisees
+
+
+
+# PARSING FILE CONFIG NOTE
+
+programs:
+  nginx:
+    cmd: "/usr/local/bin/nginx -c /etc/nginx/test.conf" // requis // redemarrage
+    numprocs: 1                 // non requis default:1         // oui
+    umask: 022                  // non requis default:022       // oui
+    workingdir: /tmp            // non requis default:/         // oui
+    autostart: true             // non requis default:true
+    autorestart: unexpected     // non requis default:unexpected
+    exitcodes:                  // non requis default:0
+      - 0
+      - 2
+    startretries: 3             // non requis default:3
+    starttime: 5                // non requis default:1
+    stopsignal: TERM            // non requis default:TERM
+    stoptime: 10                // non requis default:10
+    stdout: /tmp/nginx.stdout   // non requis default:NULL      // oui
+    stderr: /tmp/nginx.stderr   // non requis default:NULL      // oui
+    env:                        // non requis // oui
+      STARTED_BY: taskmaster
+      ANSWER: 42
+  vogsphere:
+    cmd: "/usr/local/bin/vogsphere-worker --no-prefork"
+    numprocs: 8
+    umask: 077
+    workingdir: /tmp
+    autostart: true
+    autorestart: unexpected
+    exitcodes: 0
+    startretries: 3
+    starttime: 5
+    stopsignal: USR1
+    stoptime: 10
+    stdout: /tmp/vgsworker.stdout
+    stderr: /tmp/vgsworker.stderr
+  test_error:
+    cmd: "ls            OK// erreur de syntax
+    cmd ls              OK// erreur de syntax 
+    numprocessus: 2     OK// parametre inconnue
+    umask: test         OK// parametre du mauvais type
+    umask: -1 => 511    OK// int to octal max 
+    exitcodes: 0        // parametre du mauvais type list
+    stoptime: -3        OK// valeur invalide
+                        OK// parametre manquant obligatoire
+                        // not program 

@@ -9,7 +9,7 @@
 typedef struct s_config {
     std::string                         cmd;
     int                                 numProcs;
-    std::string                         umask;
+    mode_t                              umask;
     std::string                         workingDir;
     std::string                         autoStart;
     std::string                         autoRestart;
