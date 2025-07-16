@@ -5,6 +5,16 @@
 #include <map>
 #include <vector>
 #include <signal.h>
+#include <mutex>
+
+enum class ProcessStatus
+{
+    START,
+    DOWN,
+    UNEXPECT_DOWN,
+    SHUTING_DOWN,
+    STARTING,
+};
 
 typedef struct s_config {
     std::string                         cmd;
@@ -27,15 +37,14 @@ class Process {
     
     public:
     
-        Process(const t_config& config);
+        Process(const t_config& config, std::mutex& mutex, ProcessStatus* status);
         Process(Process const &src);
         Process& operator=(Process const &rhs);
         ~Process(void);
 
-        bool isProcessUp();
         int stopProcess();
-        bool startProcess();
-        
+        void startProcess(int retry);
+        bool isProcessUp();
         void killProcess();
         pid_t getPid() const ;
 
@@ -44,9 +53,11 @@ class Process {
         std::vector<char*> buildEnvp(const std::map<std::string, std::string>& envMap);
         void freeCStringVector(std::vector<char*>& vec);
 
-        std::string _name;
+        std::string     _name;
         t_config      _config;
         pid_t         _processus;
+        std::mutex& _statusMutex;
+        ProcessStatus *_processStatus;
 
 };
 

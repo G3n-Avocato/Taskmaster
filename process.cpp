@@ -3,8 +3,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <cstring>
+#include <thread>
+#include <sys/wait.h>
 
-Process::Process(const t_config& config) : _config(config)
+Process::Process(const t_config& config, std::mutex& mutex, ProcessStatus *processStatus) : _config(config), _statusMutex(mutex), _processStatus(processStatus)
 {
 
 }
@@ -82,19 +84,43 @@ void Process::freeCStringVector(std::vector<char*>& vec) {
     vec.clear();
 }
 
-bool Process::startProcess()
+void Process::startProcess(int retry)
 {
     _processus = fork();
-
+    (void) retry;
     if (_processus == -1) 
     {
         perror("fork");
-        return false;
+        std::unique_lock<std::mutex> lock(_statusMutex);
+        *_processStatus = ProcessStatus::DOWN;
+        lock.unlock();
+        if (retry > 0)
+            startProcess(--retry);
     }
     else if (_processus > 0) 
     {
         std::cout << "Parent process" << std::endl;
-        return true;
+        std::thread([this, retry]() {
+            int waited = 0;
+            const int maxWait = _config.startTime;
+
+            while (waited < maxWait)
+            {
+                if (this->isProcessUp())
+                {
+                    std::unique_lock<std::mutex> lock(_statusMutex);
+                    *_processStatus = ProcessStatus::START;
+                    lock.unlock();
+                    std::cout << "Process start gracefully." << std::endl;
+                }
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+                waited++;
+            }
+            if (waited == maxWait && retry > 0)
+            {
+                startProcess(retry -1);
+            }
+        }).detach();
     }
     else if (_processus == 0) 
     {
@@ -102,13 +128,10 @@ bool Process::startProcess()
         //::umask(_config.umask);
         std::vector<char*> argv = buildArgv(_config.cmd);
         std::vector<char*> envp = buildEnvp(_config.env);
+        
         execve(argv[0], argv.data(), envp.data());
-        perror("execve failed");
-        freeCStringVector(argv);
-        freeCStringVector(envp);
-        _exit(EXIT_FAILURE);
+        
     }
-    return false;
 }
 
 bool Process::isProcessUp()
@@ -121,6 +144,45 @@ int Process::stopProcess()
     if (_processus <= 0)
     {
         return 0;
+    }
+
+    kill(_processus, _config.stopSignal);
+    std::thread([this]() {
+        int waited = 0;
+        const int maxWait = _config.stopTime;
+
+        while (waited < maxWait)
+        {
+            if (!this->isProcessUp())
+            {
+                int status;
+                waitpid(_processus, &status, 0);
+                std::unique_lock<std::mutex> lock(_statusMutex);
+                *_processStatus = ProcessStatus::DOWN;
+                lock.unlock();
+                std::cout << "Process stopped gracefully." << std::endl;
+                return;
+            }
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            waited++;
+        }
+        
+        std::cout << "Timeout reached. Killing process." << std::endl;
+        this->killProcess();
+        int status;
+        waitpid(_processus, &status, 0);
+        std::unique_lock<std::mutex> lock(_statusMutex);
+        *_processStatus = ProcessStatus::UNEXPECT_DOWN;
+        lock.unlock();
+    }).detach();
+    return 2;
+}
+/*
+int Process::checkExitCode()
+{
+    if (_processus <= 0)
+    {
+        return -1;
     }
 
     int waited = 0;
@@ -140,6 +202,7 @@ int Process::stopProcess()
     killProcess();
     return 2;
 }
+*/
 
 void Process::killProcess()
 {

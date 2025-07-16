@@ -40,6 +40,16 @@ int main (int argc, char** argv) {
             std::cout << "\t\t" << iter->first << " : " << iter->second << std::endl;
         
     }
+    Supervisor test(programs_tab);
+    std::list<std::string> processList;
+    processList.push_back("sleep");
+
+    test.processStatus();
+    test.processStart(processList);
+    test.processStatus();
+    //test.processStop(processList);
+
+
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
