@@ -3,14 +3,11 @@ C++
 
 note laura :
 
--verifier quel parametre sont obligatoire ? et quel parametre peuvent etre remplacer par une valeur par default ? quel parametre touches au processus et necessite une relance de la cmd reload  
--reparsing valeur ranger dans struct 
+    ->quel parametre touches au processus et necessite une relance de la cmd reload  
 
+-parsing renforcer pour chaque option reste std::string ,  workdir , stdout , stderr , cmd , comment parser ces paras
 
-
-
-
-
+-test info aleatoire  
 
 
 1- Implementation de la gestion basique des processus

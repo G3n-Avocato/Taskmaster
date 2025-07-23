@@ -43,7 +43,9 @@ int main (int argc, char** argv) {
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
-
+    } catch (const YAML::BadFile &e) {
+        std::cerr << "Unable to open YAML file : " << e.what() << std::endl;
+        return (1);
     } catch (const Parser::BadParaException &e) {
         std::cerr << "Error Exception : " << e.what() << std::endl;
         return (1);
@@ -53,5 +55,5 @@ int main (int argc, char** argv) {
     } catch (const YAML::Exception &e) {
         std::cerr << "Error Exception : " << e.what() << std::endl;
         return (1);
-    } 
+    }
 }

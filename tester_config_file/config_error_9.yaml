@@ -1,11 +1,3 @@
-#programs:
-#  test_error:
-#    cmd: "ls"
-#    cmd ls
-#    numprocessus: 2
-#    umask: test
-#    exitcodes: 0
-#    stoptime: -3
 programs:
   nginx:
     cmd: "/usr/local/bin/nginx -c /etc/nginx/test.conf"
@@ -14,13 +6,14 @@ programs:
     workingdir: /tmp
     autostart: true
     autorestart: unexpected
-    exitcodes: 0
+    exitcodes:
+      - 0
+      - 2
     startretries: 3
-    starttime: 5
     stopsignal: TERM
     stoptime: 10
     stdout: /tmp/nginx.stdout
     stderr: /tmp/nginx.stderr
     env:
-        STARTED_BY: taskmaster
-        ANSWER: 42
+      STARTED_BY: taskmaster
+      ANSWER: 42
