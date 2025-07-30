@@ -1,6 +1,6 @@
 programs:
   echo:
-    cmd: "/bin/sleep 3"
+    cmd: "/bin/ls -la"
     numprocs: 1
     umask: 022
     workingdir: /tmp
@@ -13,8 +13,8 @@ programs:
     starttime: 5
     stopsignal: TERM
     stoptime: 10
-    stdout: /tmp/stdout
-    stderr: /tmp/stderr
+    stdout: /tmp/ls.stdout
+    stderr: /tmp/ls.stderr
     env:
       STARTED_BY: taskmaster
       ANSWER: 42  

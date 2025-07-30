@@ -9,6 +9,8 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <thread>
 #include <mutex>
 
@@ -61,14 +63,20 @@ class Process {
         std::vector<char*>  buildEnvp(const std::map<std::string, std::string>& envMap);
         void                freeCStringVector(std::vector<char*>& vec);
 
-        void                thread_monitoring_status();
+        bool                open_file_std();
 
-        std::string     _name;
-        t_config        _config;
-        pid_t           _processus;
-        std::thread     _t1;
+        void                thread_monitoring_status();
+        
+        t_config                _config;
+
+        int                     _fd_out;
+        int                     _fd_err;
+
+        pid_t                   _processus;
+        
+        std::thread             _t1;
         mutable std::mutex      _status_mutex;
-        ProcessStatus   _status;
+        ProcessStatus           _status;
 
 };
 

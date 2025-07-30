@@ -2,8 +2,12 @@
 
 Process::Process(const t_config& config, ProcessStatus stat) : _config(config) 
 {
-    std::lock_guard<std::mutex> lock(this->_status_mutex);
-    this->_status = stat;
+    {
+        std::lock_guard<std::mutex> lock(this->_status_mutex);
+        this->_status = stat;
+    }
+    if (!open_file_std())
+        exit(1);
 }
 
 Process::~Process(void) 
@@ -23,6 +27,17 @@ Process::~Process(void)
     //        killProcess();
     //    }
     //}
+}
+
+bool    Process::open_file_std(void) {
+    this->_fd_out = open(this->_config.stdout.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    this->_fd_err = open(this->_config.stderr.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+
+    if (this->_fd_out < 0 || this->_fd_err < 0) {
+        perror("open");
+        return false ;
+    }
+    return true ;
 }
 
 // FCT PRINT ENUM STATUS TEST // 
@@ -101,11 +116,6 @@ void Process::freeCStringVector(std::vector<char*>& vec) {
 /////////////////////////
 bool Process::startProcess()
 {
-    //{
-    //    std::lock_guard<std::mutex> lock(this->_status_mutex);
-    //    this->_status = ProcessStatus::STARTING;
-    //    std::cout << " after fork : " << enumtoString(this->_status) << std::endl;
-    //}
     this->_processus = fork();    
 
     if (this->_processus == -1) 
@@ -121,16 +131,20 @@ bool Process::startProcess()
     {
         std::cout << "Child process" << std::endl;
 
+
+        if (dup2(this->_fd_out, STDOUT_FILENO) < 0) {
+            perror("dup2 stdout");
+            exit(EXIT_FAILURE);
+        }
+        if (dup2(this->_fd_err, STDERR_FILENO) < 0) {
+            perror("dup2 stderr");
+            exit(EXIT_FAILURE);
+        }
+        close(this->_fd_out);
+        close(this->_fd_err);
+
         std::vector<char*> argv = buildArgv(this->_config.cmd);
         std::vector<char*> envp = buildEnvp(this->_config.env);
-
-        // TEST argv et envp sont valides //
-        //std::vector<char*>::iterator it = argv.begin();
-        //for ( ; it != argv.end(); it++)
-        //    std::cout << "vector argv data : " << *it << std::endl;
-        //std::vector<char*>::iterator itt = envp.begin();
-        //for ( ; itt != envp.end(); itt++)
-        //    std::cout << "vector envp data : " << *itt << std::endl;
 
 
         if (execve(argv[0], argv.data(), envp.data()) == -1)
@@ -141,6 +155,9 @@ bool Process::startProcess()
     }
     else if (this->_processus > 0) 
     {
+        close(this->_fd_out);
+        close(this->_fd_err);
+
         std::cout << "Parent process" << std::endl;
         {
             std::lock_guard<std::mutex> lock(this->_status_mutex);
@@ -149,8 +166,7 @@ bool Process::startProcess()
         }
         
         this->_t1 = std::thread(&Process::thread_monitoring_status, this);
-        //std::cout << " apres lancement thread t1 : " << enumtoString(this->_status) << std::endl;
-
+        
         return true;
     }
     return false;

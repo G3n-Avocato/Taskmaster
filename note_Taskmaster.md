@@ -18,6 +18,7 @@ list:
 ->quel parametre touches au processus et necessite une relance de la cmd reload  
 
 parsing : 
+-> erreur dans le parsing en cas de fichier non-existant a revoir
 -parsing renforcer pour chaque option reste std::string ,  workdir , stdout , stderr , cmd , comment parser ces paras
 -test info aleatoire  
 
@@ -26,7 +27,7 @@ parsing :
 ok    lancer un processus enfant avec - FORK()
 ok    surveiller son etat - STD::THREAD
 ok    envoyer des signaux SIGKILL pour arreter proprement
-    recuperer la sortie standard / erreur
+ok    recuperer la sortie standard / erreur
 
 2- Supervision + redemarrage automatique 
     implementer systeme de boucle pour verifier etat
