@@ -1,23 +1,39 @@
 # include "process.hpp"
 
-#include <sys/types.h>
-#include <unistd.h>
-#include <cstring>
-
-Process::Process(const t_config& config) : _config(config)
+Process::Process(const t_config& config, ProcessStatus stat) : _config(config) 
 {
-
+    std::lock_guard<std::mutex> lock(this->_status_mutex);
+    this->_status = stat;
 }
 
 Process::~Process(void) 
 {
-    if (_processus > 0)
+    if (this->_t1.joinable())
+        this->_t1.join();
+
     {
-        stopProcess();
-        if (isProcessUp())
-        {
-            killProcess();
-        }
+        std::lock_guard<std::mutex> lock(this->_status_mutex);
+        std::cout << " in destruction : " << enumtoString(this->_status) << std::endl;
+    }
+    //if (_processus > 0)
+    //{
+    //    stopProcess();
+    //    if (isProcessUp())
+    //    {
+    //        killProcess();
+    //    }
+    //}
+}
+
+// FCT PRINT ENUM STATUS TEST // 
+const char* enumtoString(ProcessStatus stat) {
+    switch (stat) {
+        case START: return "START";
+        case DOWN: return "DOWN";
+        case UNEXPECT_DOWN: return "UNEXPECT_DOWN";
+        case SHUTING_DOWN: return "SHUTING_DOWN";
+        case STARTING: return "STARTING";
+        default: return "unknown";
     }
 }
 
@@ -82,40 +98,106 @@ void Process::freeCStringVector(std::vector<char*>& vec) {
     vec.clear();
 }
 
+/////////////////////////
 bool Process::startProcess()
 {
-    _processus = fork();
+    //{
+    //    std::lock_guard<std::mutex> lock(this->_status_mutex);
+    //    this->_status = ProcessStatus::STARTING;
+    //    std::cout << " after fork : " << enumtoString(this->_status) << std::endl;
+    //}
+    this->_processus = fork();    
 
-    if (_processus == -1) 
+    if (this->_processus == -1) 
     {
+        {    
+            std::lock_guard<std::mutex> lock(this->_status_mutex);            
+            this->_status = ProcessStatus::DOWN;
+        }
         perror("fork");
         return false;
     }
-    else if (_processus > 0) 
-    {
-        std::cout << "Parent process" << std::endl;
-        return true;
-    }
-    else if (_processus == 0) 
+    else if (this->_processus == 0) 
     {
         std::cout << "Child process" << std::endl;
-        //::umask(_config.umask);
-        std::vector<char*> argv = buildArgv(_config.cmd);
-        std::vector<char*> envp = buildEnvp(_config.env);
-        execve(argv[0], argv.data(), envp.data());
-        perror("execve failed");
+
+        std::vector<char*> argv = buildArgv(this->_config.cmd);
+        std::vector<char*> envp = buildEnvp(this->_config.env);
+
+        // TEST argv et envp sont valides //
+        //std::vector<char*>::iterator it = argv.begin();
+        //for ( ; it != argv.end(); it++)
+        //    std::cout << "vector argv data : " << *it << std::endl;
+        //std::vector<char*>::iterator itt = envp.begin();
+        //for ( ; itt != envp.end(); itt++)
+        //    std::cout << "vector envp data : " << *itt << std::endl;
+
+
+        if (execve(argv[0], argv.data(), envp.data()) == -1)
+            std::cerr << "Execve failed : " << strerror(errno) << std::endl;
         freeCStringVector(argv);
         freeCStringVector(envp);
-        _exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE);
+    }
+    else if (this->_processus > 0) 
+    {
+        std::cout << "Parent process" << std::endl;
+        {
+            std::lock_guard<std::mutex> lock(this->_status_mutex);
+            this->_status = ProcessStatus::STARTING;
+            std::cout << " set starting from parent : " << enumtoString(this->_status) << std::endl;
+        }
+        
+        this->_t1 = std::thread(&Process::thread_monitoring_status, this);
+        //std::cout << " apres lancement thread t1 : " << enumtoString(this->_status) << std::endl;
+
+        return true;
     }
     return false;
 }
 
-bool Process::isProcessUp()
-{
-    return _processus > 0 && kill(_processus, 0) == 0;
+void    Process::thread_monitoring_status() {
+    int status; 
+    
+    while (true) {
+        pid_t child_pid = waitpid(this->_processus, &status, WNOHANG);
+
+        if (child_pid == -1) {
+            perror("waitpid error");
+            break  ;
+        }
+        if (child_pid == 0) {
+            {
+                std::lock_guard<std::mutex> lock(this->_status_mutex);
+                this->_status = ProcessStatus::START;
+            }
+        }
+        else if (child_pid == this->_processus) {
+            {
+                std::lock_guard<std::mutex> lock(this->_status_mutex);
+                if (WIFEXITED(status))
+                    this->_status = ProcessStatus::DOWN;
+                else if (WIFSIGNALED(status)) //a revoir avec le bon exit status 
+                    this->_status = ProcessStatus::UNEXPECT_DOWN;
+                else
+                    this->_status = ProcessStatus::UNEXPECT_DOWN;
+            }
+            break ;
+        }
+        {
+            std::lock_guard<std::mutex> lock(this->_status_mutex);
+            std::cout << " set statut start ou down in thread  : " << enumtoString(this->_status) << std::endl;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
 }
 
+bool Process::isProcessUp()
+{
+    return this->_processus > 0 && kill(this->_processus, 0) == 0;
+}
+
+//////////////////////////
 int Process::stopProcess()
 {
     if (_processus <= 0)
@@ -143,13 +225,21 @@ int Process::stopProcess()
 
 void Process::killProcess()
 {
-    if (_processus > 0)
+    if (this->_processus > 0)
     {
-        kill(_processus, SIGKILL);
+        kill(this->_processus, SIGKILL);
     }
 }
 
 pid_t Process::getPid() const 
 {
-    return _processus;
+    return this->_processus;
+}
+
+const char* Process::getStatus() const {
+    {
+        std::lock_guard<std::mutex> lock(this->_status_mutex);
+        const char* str = enumtoString(this->_status);
+        return str ; 
+    }
 }

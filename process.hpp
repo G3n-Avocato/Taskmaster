@@ -4,7 +4,21 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include <unistd.h>
+#include <cstring>
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <thread>
+#include <mutex>
+
+enum ProcessStatus {
+    START,
+    DOWN,
+    UNEXPECT_DOWN,
+    SHUTING_DOWN,
+    STARTING,
+};
 
 typedef struct s_config {
     std::string                         cmd;
@@ -27,7 +41,7 @@ class Process {
     
     public:
     
-        Process(const t_config& config);
+        Process(const t_config& config, ProcessStatus stat);
         Process(Process const &src);
         Process& operator=(Process const &rhs);
         ~Process(void);
@@ -39,15 +53,25 @@ class Process {
         void killProcess();
         pid_t getPid() const ;
 
-    private:
-        std::vector<char*> buildArgv(const std::string& cmd);
-        std::vector<char*> buildEnvp(const std::map<std::string, std::string>& envMap);
-        void freeCStringVector(std::vector<char*>& vec);
+        const char* getStatus() const;
 
-        std::string _name;
-        t_config      _config;
-        pid_t         _processus;
+    private:
+
+        std::vector<char*>  buildArgv(const std::string& cmd);
+        std::vector<char*>  buildEnvp(const std::map<std::string, std::string>& envMap);
+        void                freeCStringVector(std::vector<char*>& vec);
+
+        void                thread_monitoring_status();
+
+        std::string     _name;
+        t_config        _config;
+        pid_t           _processus;
+        std::thread     _t1;
+        mutable std::mutex      _status_mutex;
+        ProcessStatus   _status;
 
 };
+
+const char* enumtoString(ProcessStatus stat);
 
 #endif

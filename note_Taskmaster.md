@@ -1,19 +1,31 @@
 # NOTE Taskmaster
 C++
 
+
+enum ProcessStatus {
+    START,          // Le process est en cours de démarrage (juste forké)
+    STARTING,       // Process en train de démarrer (peut-être juste après fork)
+    DOWN,           // Process terminé normalement (exit code 0)
+    UNEXPECT_DOWN,  // Process terminé de façon inattendue (exit code != 0 ou signal)
+    SHUTING_DOWN    // Process en cours d'arrêt contrôlé (ex: signal demandé)
+};
+
+
+
 note laura :
 
-    ->quel parametre touches au processus et necessite une relance de la cmd reload  
+list:
+->quel parametre touches au processus et necessite une relance de la cmd reload  
 
+parsing : 
 -parsing renforcer pour chaque option reste std::string ,  workdir , stdout , stderr , cmd , comment parser ces paras
-
 -test info aleatoire  
 
 
 1- Implementation de la gestion basique des processus
-    lancer un processus enfant avec - FORK()
-    surveiller son etat - STD::THREAD
-    envoyer des signaux SIGKILL pour arreter proprement
+ok    lancer un processus enfant avec - FORK()
+ok    surveiller son etat - STD::THREAD
+ok    envoyer des signaux SIGKILL pour arreter proprement
     recuperer la sortie standard / erreur
 
 2- Supervision + redemarrage automatique 
@@ -25,9 +37,9 @@ note laura :
     mettre en place rotation des logs (size nbre fichier)
 
 4- Gestion Config 
-    format (YAML) 
-    list parametre proposer fichier 
-    charger et PARSER FICHIER de config au demarrage 
+ok    format (YAML) 
+ok    list parametre proposer fichier 
+o    charger et PARSER FICHIER de config au demarrage 
     permettre le rechargement dynamique
 
 5- Interface user / controller 
