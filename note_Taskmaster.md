@@ -1,6 +1,6 @@
-# NOTE Taskmaster
-C++
+# NOTE Taskmaster C++
 
+::::::::: A REPRENDRE :::::::::::
 
 enum ProcessStatus {
     START,          // Le process est en cours de démarrage (juste forké)
@@ -10,19 +10,19 @@ enum ProcessStatus {
     SHUTING_DOWN    // Process en cours d'arrêt contrôlé (ex: signal demandé)
 };
 
-
-
-note laura :
-
-list:
-->quel parametre touches au processus et necessite une relance de la cmd reload  
-
 parsing : 
 -> erreur dans le parsing en cas de fichier non-existant a revoir
 -parsing renforcer pour chaque option reste std::string ,  workdir , stdout , stderr , cmd , comment parser ces paras
 -test info aleatoire  
 
+fork() child process : 
+-> en cas d'erreur exec dans child impossible de free quoi que ce soit (test ex cmd: ls -la)
 
+* Note laura :
+list -> quel parametre touches au processus et necessite une relance de la cmd reload
+
+
+# Plan Global
 1- Implementation de la gestion basique des processus
 ok    lancer un processus enfant avec - FORK()
 ok    surveiller son etat - STD::THREAD
@@ -32,20 +32,23 @@ ok    recuperer la sortie standard / erreur
 2- Supervision + redemarrage automatique 
     implementer systeme de boucle pour verifier etat
     suivre politique de redemarrage
+    mettre en place toute les options 
 
 3- Gestion des logs
-    capturer stdout / stderr des processus dans fichier
-    mettre en place rotation des logs (size nbre fichier)
+ok    capturer stdout / stderr des processus dans fichier
+    mettre en place rotation des logs (size nbre fichier) ....?
 
 4- Gestion Config 
 ok    format (YAML) 
 ok    list parametre proposer fichier 
 o    charger et PARSER FICHIER de config au demarrage 
-    permettre le rechargement dynamique
+    
+5- Permettre le rechargement dynamique du fichier de config ....?
 
 5- Interface user / controller 
     en ligne de commande (start stop statut etc)
 
+# Def + notes fct
 supervisord -> Gerer plusieurs processus : permet de lancer plusieurs services depuis un meme point central 
             -> Redemarrage automatique : si un processus plante, supervisord relance automatiquement
             -> Logging centralisee : gere les logs stdout et stderr de chaque processus (debug + monitoring)
@@ -69,13 +72,60 @@ dans parents attende qu un enfant meure et dit pourquoi
 signal()
 intercepter signaux SIGCHLD ou SIGTERM
 
-
-
 std::thread 
 
 kill(pid, 0)
 
-BASE de C++
+# PARSING FILE CONFIG NOTE
+
+    programs:
+      nginx:
+ok      cmd: "/usr/local/bin/nginx -c /etc/nginx/test.conf" // requis                       // redemarrage
+        numprocs: 1                                         // non requis default:1         // oui
+ok      umask: 022                                          // non requis default:022       // oui
+ok      workingdir: /tmp                                    // non requis default:/         // oui
+        autostart: true                                     // non requis default:true
+        autorestart: unexpected                             // non requis default:unexpected
+        exitcodes:                                          // non requis default:0
+          - 0
+          - 2
+        startretries: 3                                     // non requis default:3
+        starttime: 5                                        // non requis default:1
+        stopsignal: TERM                                    // non requis default:TERM
+        stoptime: 10                                        // non requis default:10
+ok      stdout: /tmp/nginx.stdout                           // non requis default:NULL      // oui
+ok      stderr: /tmp/nginx.stderr                           // non requis default:NULL      // oui
+ok      env:                                                // non requis                   // oui
+          STARTED_BY: taskmaster
+          ANSWER: 42
+      vogsphere:
+        cmd: "/usr/local/bin/vogsphere-worker --no-prefork"
+        numprocs: 8
+        umask: 077
+        workingdir: /tmp
+        autostart: true
+        autorestart: unexpected
+        exitcodes: 0
+        startretries: 3
+        starttime: 5
+        stopsignal: USR1
+        stoptime: 10
+        stdout: /tmp/vgsworker.stdout
+        stderr: /tmp/vgsworker.stderr
+  test_error:
+    cmd: "ls            OK// erreur de syntax
+    cmd ls              OK// erreur de syntax 
+    numprocessus: 2     OK// parametre inconnue
+    umask: test         OK// parametre du mauvais type
+    umask: -1 => 511    OK// int to octal max 
+    exitcodes: 0        // parametre du mauvais type list
+    stoptime: -3        OK// valeur invalide
+                        OK// parametre manquant obligatoire
+                        // not program 
+
+
+
+# BASE C++ revision Laura
 :: Classes :: 
 
 public, accessible depuis l'exterieur 
@@ -288,52 +338,3 @@ public, accessible depuis l'exterieur
 
     Surcharge de l'opérateur (ex : << -> operateur d'insertion utilisee avc le flux std::cout),
         definir comment il se comporte pour des types personnalisees
-
-
-
-# PARSING FILE CONFIG NOTE
-
-programs:
-  nginx:
-    cmd: "/usr/local/bin/nginx -c /etc/nginx/test.conf" // requis // redemarrage
-    numprocs: 1                 // non requis default:1         // oui
-    umask: 022                  // non requis default:022       // oui
-    workingdir: /tmp            // non requis default:/         // oui
-    autostart: true             // non requis default:true
-    autorestart: unexpected     // non requis default:unexpected
-    exitcodes:                  // non requis default:0
-      - 0
-      - 2
-    startretries: 3             // non requis default:3
-    starttime: 5                // non requis default:1
-    stopsignal: TERM            // non requis default:TERM
-    stoptime: 10                // non requis default:10
-    stdout: /tmp/nginx.stdout   // non requis default:NULL      // oui
-    stderr: /tmp/nginx.stderr   // non requis default:NULL      // oui
-    env:                        // non requis // oui
-      STARTED_BY: taskmaster
-      ANSWER: 42
-  vogsphere:
-    cmd: "/usr/local/bin/vogsphere-worker --no-prefork"
-    numprocs: 8
-    umask: 077
-    workingdir: /tmp
-    autostart: true
-    autorestart: unexpected
-    exitcodes: 0
-    startretries: 3
-    starttime: 5
-    stopsignal: USR1
-    stoptime: 10
-    stdout: /tmp/vgsworker.stdout
-    stderr: /tmp/vgsworker.stderr
-  test_error:
-    cmd: "ls            OK// erreur de syntax
-    cmd ls              OK// erreur de syntax 
-    numprocessus: 2     OK// parametre inconnue
-    umask: test         OK// parametre du mauvais type
-    umask: -1 => 511    OK// int to octal max 
-    exitcodes: 0        // parametre du mauvais type list
-    stoptime: -3        OK// valeur invalide
-                        OK// parametre manquant obligatoire
-                        // not program 

@@ -1,13 +1,15 @@
 # include "process.hpp"
-
+# include "supervisor.hpp"
 Process::Process(const t_config& config, ProcessStatus stat) : _config(config) 
 {
     {
         std::lock_guard<std::mutex> lock(this->_status_mutex);
         this->_status = stat;
     }
-    if (!open_file_std())
-        exit(1);
+    if (!open_file_std()) 
+        exit(1); // GESTION D'ERREUR A REVOIR
+    this->_exec.argv = buildArgv(this->_config.cmd);
+    this->_exec.envp = buildEnvp(this->_config.env);
 }
 
 Process::~Process(void) 
@@ -19,6 +21,8 @@ Process::~Process(void)
         std::lock_guard<std::mutex> lock(this->_status_mutex);
         std::cout << " in destruction : " << enumtoString(this->_status) << std::endl;
     }
+    freeCStringVector(this->_exec.argv);
+    freeCStringVector(this->_exec.envp);
     //if (_processus > 0)
     //{
     //    stopProcess();
@@ -30,10 +34,10 @@ Process::~Process(void)
 }
 
 bool    Process::open_file_std(void) {
-    this->_fd_out = open(this->_config.stdout.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-    this->_fd_err = open(this->_config.stderr.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    this->_exec.fd_out = open(this->_config.stdout.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    this->_exec.fd_err = open(this->_config.stderr.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
 
-    if (this->_fd_out < 0 || this->_fd_err < 0) {
+    if (this->_exec.fd_out < 0 || this->_exec.fd_err < 0) {
         perror("open");
         return false ;
     }
@@ -127,36 +131,13 @@ bool Process::startProcess()
         perror("fork");
         return false;
     }
-    else if (this->_processus == 0) 
-    {
-        std::cout << "Child process" << std::endl;
-
-
-        if (dup2(this->_fd_out, STDOUT_FILENO) < 0) {
-            perror("dup2 stdout");
-            exit(EXIT_FAILURE);
-        }
-        if (dup2(this->_fd_err, STDERR_FILENO) < 0) {
-            perror("dup2 stderr");
-            exit(EXIT_FAILURE);
-        }
-        close(this->_fd_out);
-        close(this->_fd_err);
-
-        std::vector<char*> argv = buildArgv(this->_config.cmd);
-        std::vector<char*> envp = buildEnvp(this->_config.env);
-
-
-        if (execve(argv[0], argv.data(), envp.data()) == -1)
-            std::cerr << "Execve failed : " << strerror(errno) << std::endl;
-        freeCStringVector(argv);
-        freeCStringVector(envp);
-        exit(EXIT_FAILURE);
+    else if (this->_processus == 0) {
+        child_exec_process();
     }
     else if (this->_processus > 0) 
     {
-        close(this->_fd_out);
-        close(this->_fd_err);
+        close(this->_exec.fd_out);
+        close(this->_exec.fd_err);
 
         std::cout << "Parent process" << std::endl;
         {
@@ -206,6 +187,40 @@ void    Process::thread_monitoring_status() {
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
+}
+
+void    Process::child_exec_process() {
+    std::cout << "Child process" << std::endl;
+
+    umask(this->_config.umask);
+    if (chdir(this->_config.workingDir.c_str()) < 0) {
+        perror("chdir");
+        exit(EXIT_FAILURE);
+    }
+    if (dup2(this->_exec.fd_out, STDOUT_FILENO) < 0) {
+        perror("dup2 stdout");
+        exit(EXIT_FAILURE);
+    }
+    if (dup2(this->_exec.fd_err, STDERR_FILENO) < 0) {
+        perror("dup2 stderr");
+        exit(EXIT_FAILURE);
+    }
+    close(this->_exec.fd_out);
+    close(this->_exec.fd_err);
+
+    //std::vector<char*> argv = buildArgv(this->_config.cmd);
+    //std::vector<char*> envp = buildEnvp(this->_config.env);
+    
+    if (execve(this->_exec.argv[0], this->_exec.argv.data(), this->_exec.envp.data()) == -1) {
+        std::cerr << "Execve failed : " << strerror(errno) << std::endl;
+        freeCStringVector(this->_exec.argv);
+        freeCStringVector(this->_exec.envp);
+        //this->~Process();
+        exit(EXIT_FAILURE);
+    }
+    freeCStringVector(this->_exec.argv);
+    freeCStringVector(this->_exec.envp);
+    exit(EXIT_FAILURE);
 }
 
 bool Process::isProcessUp()

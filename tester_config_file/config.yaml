@@ -1,6 +1,6 @@
 programs:
   echo:
-    cmd: "/bin/ls -la"
+    cmd: "/bin/echo 3 >> saucisse.txt"
     numprocs: 1
     umask: 022
     workingdir: /tmp

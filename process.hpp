@@ -39,6 +39,14 @@ typedef struct s_config {
     std::map<std::string, std::string>  env;
 } t_config;
 
+
+typedef struct s_exec_args {
+    std::vector<char*>                  argv;
+    std::vector<char*>                  envp;
+    int                                 fd_out;
+    int                                 fd_err;
+} t_execs;
+
 class Process {
     
     public:
@@ -50,12 +58,14 @@ class Process {
 
         bool isProcessUp();
         int stopProcess();
-        bool startProcess();
+        
+        bool                startProcess();
         
         void killProcess();
         pid_t getPid() const ;
 
-        const char* getStatus() const;
+        const char*         getStatus() const;
+        //static void         freeCStringVector(std::vector<char*>& vec);
 
     private:
 
@@ -64,16 +74,15 @@ class Process {
         void                freeCStringVector(std::vector<char*>& vec);
 
         bool                open_file_std();
-
         void                thread_monitoring_status();
+        void                child_exec_process();
         
         t_config                _config;
-
-        int                     _fd_out;
-        int                     _fd_err;
+        t_execs                 _exec;
+        //int                     _fd_out;
+        //int                     _fd_err;
 
         pid_t                   _processus;
-        
         std::thread             _t1;
         mutable std::mutex      _status_mutex;
         ProcessStatus           _status;
@@ -81,5 +90,6 @@ class Process {
 };
 
 const char* enumtoString(ProcessStatus stat);
+void        child_exec_process(t_execs& _exec);
 
 #endif
