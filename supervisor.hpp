@@ -14,7 +14,7 @@ class Supervisor {
 
     private:
 
-        std::map<std::string, Process*> _processMap;
+        std::map<std::string, std::vector<Process*>> _processMap;
 };
 
 # endif

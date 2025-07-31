@@ -51,7 +51,7 @@ class Process {
     
     public:
     
-        Process(const t_config& config, ProcessStatus stat);
+        Process(int i, const t_config& config, ProcessStatus stat);
         Process(Process const &src);
         Process& operator=(Process const &rhs);
         ~Process(void);
@@ -77,6 +77,7 @@ class Process {
         void                thread_monitoring_status();
         void                child_exec_process();
         
+        int                     _id;
         t_config                _config;
         t_execs                 _exec;
         //int                     _fd_out;

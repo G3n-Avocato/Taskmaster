@@ -4,26 +4,37 @@ Supervisor::Supervisor(std::map<std::string, t_config> configMap)
 {
     std::map<std::string, t_config>::iterator it;
     for (it = configMap.begin(); it != configMap.end(); it++) {
-        
-        Process*    procs = new Process(it->second, ProcessStatus::DOWN);
-        this->_processMap[it->first] = procs;
+        for (int i = 0; i < it->second.numProcs; i++) {
+            Process*    procs = new Process(i, it->second, ProcessStatus::DOWN);
+            this->_processMap[it->first].push_back(procs);
+        }
     }
 
-    std::map<std::string, Process*>::iterator itt;
-    for (itt = this->_processMap.begin(); itt != this->_processMap.end(); itt++)
-        std::cout << "verif procs = " << itt->first << " " << itt->second << std::endl; 
+    std::map<std::string, std::vector<Process*>>::iterator itt;
+    for (itt = this->_processMap.begin(); itt != this->_processMap.end(); itt++) {
+        std::cout << "Verif Processus = " << itt->first << std::endl; 
+        std::vector<Process*>::iterator     it_vec;
+        for (it_vec = itt->second.begin(); it_vec != itt->second.end(); it_vec++)
+            std::cout << " " << *it_vec << std::endl; 
+    }
 }
 
 Supervisor::~Supervisor() {
-    std::map<std::string, Process*>::iterator itt;
+    std::map<std::string, std::vector<Process*>>::iterator   itt;
     for (itt = this->_processMap.begin(); itt != this->_processMap.end(); itt++) {
-        delete itt->second; 
+        std::vector<Process*>::iterator                 it_vec;
+        for (it_vec = itt->second.begin(); it_vec != itt->second.end(); it_vec++)
+            delete *it_vec; 
+        itt->second.clear();
     }
     this->_processMap.clear();
 }
 
 void    Supervisor::processStart() {
-    std::map<std::string, Process*>::iterator it = this->_processMap.begin();
-    it->second->startProcess();
-    std::cout << "status in supervisor : " << it->second->getStatus() << std::endl;
+    std::map<std::string, std::vector<Process*>>::iterator it = this->_processMap.begin();
+    std::vector<Process*>::iterator   it_vec = it->second.begin();
+    for (it_vec = it->second.begin(); it_vec != it->second.end(); it_vec++) {
+        (*it_vec)->startProcess();
+        std::cout << "status in supervisor : " << (*it_vec)->getStatus() << std::endl;
+    }
 }

@@ -1,6 +1,6 @@
 # include "process.hpp"
 # include "supervisor.hpp"
-Process::Process(const t_config& config, ProcessStatus stat) : _config(config) 
+Process::Process(int i, const t_config& config, ProcessStatus stat) : _id(i), _config(config)
 {
     {
         std::lock_guard<std::mutex> lock(this->_status_mutex);

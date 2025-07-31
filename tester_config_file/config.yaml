@@ -1,7 +1,7 @@
 programs:
   echo:
-    cmd: "/bin/echo 3 >> saucisse.txt"
-    numprocs: 1
+    cmd: "/bin/sleep 2"
+    numprocs: 3
     umask: 022
     workingdir: /tmp
     autostart: true
