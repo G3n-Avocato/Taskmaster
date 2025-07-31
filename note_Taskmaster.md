@@ -123,6 +123,12 @@ ok      env:                                                // non requis       
                         OK// parametre manquant obligatoire
                         // not program 
 
+numprocs -> nombres d'instances demarrer par supervisor
+umask -> masque attribuer a l'interieur du child pour les fichiers sur lesquels il travail ou va travailler
+autostart -> demarre au lancement de supervisor
+autorestart -> false redemarre pas, unexpected redemarre seulement si exitcode n'est pas celui attendue, true redemarre peu importe sortie d'erreur
+exitcode -> attendu par auterstart pour unexpected 
+
 
 
 # BASE C++ revision Laura
