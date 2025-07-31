@@ -4,17 +4,13 @@
 #include "process.hpp"
 
 class Supervisor {
-
     public:
-        
         Supervisor(std::map<std::string, t_config> configMap);
         ~Supervisor(void);
-
-        void    processStart();
+        void processStart();
 
     private:
-
         std::map<std::string, Process*> _processMap;
 };
 
-# endif
+#endif

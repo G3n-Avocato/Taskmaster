@@ -10,7 +10,7 @@ OBJS = $(SRCS:.cpp=.o)
 
 CC = c++
 
-CFLAGS = -Wall -Wextra -Werror
+CFLAGS = -Wall -Wextra -Werror 
 
 YAML_CPP_DIR = /usr/local/include/yaml-cpp
 YAML_CPP_LIB_DIR = /usr/local/lib

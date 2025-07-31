@@ -1,6 +1,6 @@
 # include "process.hpp"
 # include "supervisor.hpp"
-Process::Process(const t_config& config, ProcessStatus stat) : _config(config) 
+Process::Process(const t_config& config, ProcessStatus stat, Supervisor * parent) : _config(config) 
 {
     {
         std::lock_guard<std::mutex> lock(this->_status_mutex);
@@ -10,6 +10,7 @@ Process::Process(const t_config& config, ProcessStatus stat) : _config(config)
         exit(1); // GESTION D'ERREUR A REVOIR
     this->_exec.argv = buildArgv(this->_config.cmd);
     this->_exec.envp = buildEnvp(this->_config.env);
+    _parent = parent;
 }
 
 Process::~Process(void) 
@@ -215,7 +216,7 @@ void    Process::child_exec_process() {
         std::cerr << "Execve failed : " << strerror(errno) << std::endl;
         freeCStringVector(this->_exec.argv);
         freeCStringVector(this->_exec.envp);
-        //this->~Process();
+        _parent->~Supervisor();
         exit(EXIT_FAILURE);
     }
     freeCStringVector(this->_exec.argv);

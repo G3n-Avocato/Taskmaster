@@ -5,7 +5,7 @@ Supervisor::Supervisor(std::map<std::string, t_config> configMap)
     std::map<std::string, t_config>::iterator it;
     for (it = configMap.begin(); it != configMap.end(); it++) {
         
-        Process*    procs = new Process(it->second, ProcessStatus::DOWN);
+        Process*    procs = new Process(it->second, ProcessStatus::DOWN, this);
         this->_processMap[it->first] = procs;
     }
 
@@ -20,6 +20,7 @@ Supervisor::~Supervisor() {
         delete itt->second; 
     }
     this->_processMap.clear();
+    std::cout << "Supervisor destroyed, processes cleaned.\n";
 }
 
 void    Supervisor::processStart() {

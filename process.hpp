@@ -14,6 +14,8 @@
 #include <thread>
 #include <mutex>
 
+class Supervisor;
+
 enum ProcessStatus {
     START,
     DOWN,
@@ -51,7 +53,7 @@ class Process {
     
     public:
     
-        Process(const t_config& config, ProcessStatus stat);
+        Process(const t_config& config, ProcessStatus stat , Supervisor * parent);
         Process(Process const &src);
         Process& operator=(Process const &rhs);
         ~Process(void);
@@ -86,6 +88,7 @@ class Process {
         std::thread             _t1;
         mutable std::mutex      _status_mutex;
         ProcessStatus           _status;
+        Supervisor* _parent;
 
 };
 
