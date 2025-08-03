@@ -1,6 +1,6 @@
 programs:
-  echo:
-    cmd: "/bin/sleep 2"
+  ls:
+    cmd: "/bin/ls"
     numprocs: 3
     umask: 022
     workingdir: /tmp

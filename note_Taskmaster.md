@@ -3,22 +3,36 @@
 ::::::::: A REPRENDRE :::::::::::
 
 enum ProcessStatus {
-    START,          // Le process est en cours de démarrage (juste forké)
-    STARTING,       // Process en train de démarrer (peut-être juste après fork)
-    DOWN,           // Process terminé normalement (exit code 0)
-    UNEXPECT_DOWN,  // Process terminé de façon inattendue (exit code != 0 ou signal)
-    SHUTING_DOWN    // Process en cours d'arrêt contrôlé (ex: signal demandé)
+    STOPPED,        // Le processus a été arrêté volontairement ou n’a jamais été lancé.
+    STARTING,       // Il est en cours de démarrage suite à une requête de lancement.
+    RUNNING,        // Le processus fonctionne normalement.
+    BACKOFF,        // Il a cherché à démarrer (STARTING) mais s’est arrêté trop rapidemen (avant startsecs), donc supervisord va réessayer.
+    STOPPING,       // Le processus est en cours d’arrêt — requête de stop en cours.
+    EXITED,         // Le processus s’est terminé après avoir fonctionné normalement (ou anormalement), alors qu’il n’était pas supposé sortir spontanément.
+    FATAL,          // Le processus ne peut pas démarrer du tout malgré plusieurs tentatives (basé sur startretries), et le superviseur abandonne.
+    UNKNOWN,        // État indéterminé — généralement une erreur interne de Supervisord
 };
+
+Lors du démarrage :
+    Si le processus ne tient pas au moins startsecs, il passe en BACKOFF.
+    Il alterne alors entre STARTING et BACKOFF jusqu’à épuisement de startretries, puis va en FATAL.
+Une fois RUNNING :
+    S’il s’arrête spontanément :
+        avec autorestart=false → reste à EXITED
+        avec autorestart=true → redémarre toujours
+        avec autorestart=unexpected → redémarre seulement si le code de sortie n’est pas dans exitcodes
 
 parsing : 
 -> erreur dans le parsing en cas de fichier non-existant a revoir
 -parsing renforcer pour chaque option reste std::string ,  workdir , stdout , stderr , cmd , comment parser ces paras
+-> erreur stdout stderr non defini creer erreur parsing -> a changer std pas forcement definie
 -test info aleatoire  
 
 fork() child process : 
 -> en cas d'erreur exec dans child impossible de free quoi que ce soit (test ex cmd: ls -la)
 
-* Note laura :
+* Note laura : continuer a ajouter les parametres tout en adaptant supervisor
+
 list -> quel parametre touches au processus et necessite une relance de la cmd reload
 
 
@@ -41,11 +55,11 @@ ok    capturer stdout / stderr des processus dans fichier
 4- Gestion Config 
 ok    format (YAML) 
 ok    list parametre proposer fichier 
-o    charger et PARSER FICHIER de config au demarrage 
+a revoir    charger et PARSER FICHIER de config au demarrage 
     
 5- Permettre le rechargement dynamique du fichier de config ....?
 
-5- Interface user / controller 
+6- Interface user / controller 
     en ligne de commande (start stop statut etc)
 
 # Def + notes fct
@@ -125,9 +139,16 @@ ok      env:                                                // non requis       
 
 numprocs -> nombres d'instances demarrer par supervisor
 umask -> masque attribuer a l'interieur du child pour les fichiers sur lesquels il travail ou va travailler
-autostart -> demarre au lancement de supervisor
+autostart -> true or false -> demarre au lancement de supervisor
+
 autorestart -> false redemarre pas, unexpected redemarre seulement si exitcode n'est pas celui attendue, true redemarre peu importe sortie d'erreur
-exitcode -> attendu par auterstart pour unexpected 
+exitcode -> attendu par autorestart pour unexpected 
+startretries -> nbre d'essaie de supervisor pour lancer le processus
+starttime -> nbre de sec ou le processus doit rester run after start pour conciderer qu'il est good
+stoptime -> supervisor envoie d’abord SIGTERM pour demander un arrêt "propre" du processus.
+Il attend ensuite stoptime secondes pour laisser au programme le temps de se fermer correctement.
+Si le programme ne s’est pas arrêté à temps, Supervisor envoie un SIGKILL pour le forcer à se terminer.
+stopsignal -> définit quel signal est envoyé au processus lorsqu’on lui demande de s’arrêter (stop)
 
 
 
@@ -344,3 +365,14 @@ public, accessible depuis l'exterieur
 
     Surcharge de l'opérateur (ex : << -> operateur d'insertion utilisee avc le flux std::cout),
         definir comment il se comporte pour des types personnalisees
+
+
+ancienne verison :
+
+enum ProcessStatus {
+    START,          // Le process est en cours de démarrage (juste forké)
+    STARTING,       // Process en train de démarrer (peut-être juste après fork)
+    DOWN,           // Process terminé normalement (exit code 0)
+    UNEXPECT_DOWN,  // Process terminé de façon inattendue (exit code != 0 ou signal)
+    SHUTING_DOWN    // Process en cours d'arrêt contrôlé (ex: signal demandé)
+};
