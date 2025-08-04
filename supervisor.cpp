@@ -1,6 +1,6 @@
 #include "supervisor.hpp"
 
-Supervisor::Supervisor(std::map<std::string, t_config> configMap)
+Supervisor::Supervisor(std::map<std::string, t_config> configMap) 
 {
     std::map<std::string, t_config>::iterator it;
 
@@ -11,7 +11,7 @@ Supervisor::Supervisor(std::map<std::string, t_config> configMap)
         }
     }
 
-    /////////// test print
+    /////////// test print //////////////////////////////
     std::map<std::string, std::vector<Process*>>::iterator itt;
 
     for (itt = this->_processMap.begin(); itt != this->_processMap.end(); itt++) {
@@ -19,6 +19,16 @@ Supervisor::Supervisor(std::map<std::string, t_config> configMap)
         std::vector<Process*>::iterator     it_vec;
         for (it_vec = itt->second.begin(); it_vec != itt->second.end(); it_vec++)
             std::cout << " " << *it_vec << std::endl; 
+    }
+    /////////////////////////////////////////////////////
+
+    std::map<std::string, std::vector<Process*>>::iterator  it_m = this->_processMap.begin();
+    std::vector<Process*>::iterator                         it_vec;
+
+    for (it_vec = it_m->second.begin(); it_vec != it_m->second.end(); it_vec++) {
+
+        if ((*it_vec)->getautoStart())
+            (*it_vec)->startProcess();
     }
 }
 
@@ -34,9 +44,19 @@ Supervisor::~Supervisor() {
     this->_processMap.clear();
 }
 
+//void    Supervisor::loop_event_autoRestart() {
+//
+//    std::map<std::string, std::vector<Process*>>::iterator  it_m = this->_processMap.begin();
+//    std::vector<Process*>::iterator                         it_vec;
+//
+//    for (it_vec = it_m->second.begin(); it_vec != it_m->second.end(); it_vec++) {
+//        if ((*it_vec)->getautoRestart )
+//
+//}
+
 void    Supervisor::processStart() {
     std::map<std::string, std::vector<Process*>>::iterator  it = this->_processMap.begin();
-    std::vector<Process*>::iterator                         it_vec = it->second.begin();
+    std::vector<Process*>::iterator                         it_vec;
 
     for (it_vec = it->second.begin(); it_vec != it->second.end(); it_vec++) {
         (*it_vec)->startProcess();

@@ -1,6 +1,15 @@
 #include "supervisor.hpp"
 #include "parser.hpp"
 
+std::string     enumAutoRestart(StateRestart tmp) {
+    switch (tmp) {
+        case True: return "true";
+        case False: return "false";
+        case Unexpected: return "unexpected";
+        default: return "default";
+    }
+}
+
 int main (int argc, char** argv) {
 
     if (argc != 2)
@@ -22,7 +31,7 @@ int main (int argc, char** argv) {
             std::cout << "\tumask: " << it->second.umask << std::endl;
             std::cout << "\tworkingDir: " << it->second.workingDir << std::endl;
             std::cout << "\tautoStart: " << it->second.autoStart << std::endl;
-            std::cout << "\tautoRestart: " << it->second.autoRestart << std::endl;
+            std::cout << "\tautoRestart: " << enumAutoRestart(it->second.autoRestart) << std::endl;
 
             std::cout << "\texitcodes: " << std::endl;
             for (size_t i = 0; i < it->second.exitCodes.size(); i++)
@@ -46,7 +55,7 @@ int main (int argc, char** argv) {
 
         Supervisor test1(programs_tab);
 
-        test1.processStart();
+        //test1.processStart();
 
     } catch (const YAML::BadFile &e) {
         std::cerr << "Unable to open YAML file : " << e.what() << std::endl;

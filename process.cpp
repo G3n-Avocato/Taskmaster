@@ -6,7 +6,11 @@ Process::Process(int i, std::string name, const t_config& config, ProcessStatus 
         std::lock_guard<std::mutex> lock(this->_status_mutex);
         this->_status = stat;
     }
-    //init_string_workDir(name);
+    {
+        std::lock_guard<std::mutex> lock(this->_exitc_mutex);
+        this->_exit_code = false;
+    }
+
     if (!open_file_std()) 
         exit(1); // GESTION D'ERREUR A REVOIR
     this->_exec.argv = buildArgv(this->_config.cmd);
@@ -34,6 +38,7 @@ Process::~Process(void)
     //}
 }
 
+// reecrire ce code 
 bool    Process::open_file_std() {
     size_t  pos;
 
@@ -82,7 +87,7 @@ const char* enumtoString(ProcessStatus stat) {
         case EXITED: return "EXITED";
         case FATAL: return "FATAL";
         case UNKNOWN: return "UNKNOWN";
-        default: return "unknown";
+        default: return "default";
     }
 }
 
@@ -147,7 +152,6 @@ void Process::freeCStringVector(std::vector<char*>& vec) {
     vec.clear();
 }
 
-/////////////////////////
 bool Process::startProcess()
 {
     this->_processus = fork();    
@@ -166,10 +170,10 @@ bool Process::startProcess()
     }
     else if (this->_processus > 0) 
     {
-        std::time_t start = std::time(nullptr);
-        std::time_t end = std::time(nullptr);
-        double      diff = difftime(end, start);
-        if (startsec >= diff)
+        //std::time_t start = std::time(nullptr);
+        //std::time_t end = std::time(nullptr);
+        //double      diff = difftime(end, start);
+        //if (startsec >= diff)
             //good 
 
         if (this->_exec.fd_out != 1)
@@ -211,8 +215,18 @@ void    Process::thread_monitoring_status() {
         else if (child_pid == this->_processus) {
             {
                 std::lock_guard<std::mutex> lock(this->_status_mutex);
-                if (WIFEXITED(status))
+                if (WIFEXITED(status)) {
                     this->_status = ProcessStatus::EXITED;
+                    for (size_t i = 0; i < this->_config.exitCodes.size(); i++) {
+                        std::cout << this->_id << " " << this->_processus << " thread " << i << " exitcode = " << this->_config.exitCodes[i] << " wexitstatus : " << WEXITSTATUS(status) << std::endl;
+                        if (WEXITSTATUS(status) == this->_config.exitCodes[i]) {
+                            {
+                                std::lock_guard<std::mutex> lock(this->_exitc_mutex);
+                                this->_exit_code = true;
+                            }
+                        }
+                    }
+                }
                 else if (WIFSIGNALED(status)) //a revoir avec le bon exit status 
                     this->_status = ProcessStatus::EXITED;
                 else
@@ -335,5 +349,18 @@ const char* Process::getStatus() const {
         std::lock_guard<std::mutex> lock(this->_status_mutex);
         const char* str = enumtoString(this->_status);
         return str ; 
+    }
+}
+
+const bool        Process::getautoStart() const {
+    return this->_config.autoStart ;
+}
+
+const int  Process::getautoRestart() const {
+    switch (this->_config.autoRestart) {
+        case True: return 1;
+        case False: return 0;
+        case Unexpected: return 2;
+        default: return 2;
     }
 }

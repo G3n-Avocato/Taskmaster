@@ -1,13 +1,9 @@
 #ifndef PARSER_HPP
 # define PARSER_HPP
 
-#include "process.hpp"
+#include "task_define.hpp"
 
-#include <map>
-#include <string>
-#include <exception>
 #include <yaml-cpp/yaml.h>
-#include <signal.h>
 
 class Parser {
 
@@ -17,8 +13,9 @@ class Parser {
         Parser(const std::string& config_file, std::map<std::string, t_config> &programs_tab);
         ~Parser(void);
 
-        static int getSignalNumber(const std::string& name);
-
+        static int              getSignalNumber(const std::string& name);
+        static StateRestart     getStatut_autoRestart(std::string tmp);
+        
         class BadParaException : public std::exception {
             
             public:
@@ -79,15 +76,14 @@ struct convert<t_config> {
         }
         if (node["workingdir"])
             conf.workingDir = node["workingdir"].as<std::string>();
-        if (node["autostart"]) {                // true or false that's all
-            conf.autoStart = node["autostart"].as<std::string>();
-            if (conf.autoStart != "true" && conf.autoStart != "false")
-                    throw ::Parser::BadParaException("Error Exception : Bad Parameter 'autostart' ");
+        if (node["autostart"]) {                // true or false
+            conf.autoStart = node["autostart"].as<bool>();
         }
-        if (node["autorestart"]) {              // true or false or unexpected that's all
-            conf.autoRestart = node["autorestart"].as<std::string>();
-            if (conf.autoRestart != "true" && conf.autoRestart != "false" && conf.autoRestart != "unexpected")
+        if (node["autorestart"]) {              // true or false or unexpected
+            std::string tmp = node["autorestart"].as<std::string>();
+            if (tmp != "true" && tmp != "false" && tmp != "unexpected")
                 throw ::Parser::BadParaException("Error Exception : Bad Parameter 'autorestart' ");
+            conf.autoRestart = ::Parser::getStatut_autoRestart(tmp);
         }
         if (node["exitcodes"]) {
             conf.exitCodes.clear();

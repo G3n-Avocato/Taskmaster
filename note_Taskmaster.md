@@ -22,6 +22,8 @@ Une fois RUNNING :
         avec autorestart=true → redémarre toujours
         avec autorestart=unexpected → redémarre seulement si le code de sortie n’est pas dans exitcodes
 
+
+
 parsing : 
 -> erreur dans le parsing en cas de fichier non-existant a revoir
 -parsing renforcer pour chaque option reste std::string ,  workdir , stdout , stderr , cmd , comment parser ces paras
@@ -31,10 +33,13 @@ parsing :
 fork() child process : 
 -> en cas d'erreur exec dans child impossible de free quoi que ce soit (test ex cmd: ls -la)
 
-* Note laura : continuer a ajouter les parametres tout en adaptant supervisor
-
 list -> quel parametre touches au processus et necessite une relance de la cmd reload
 
+* Note laura : continuer a ajouter les parametres tout en adaptant supervisor
+
+- define.hpp creer
+- modif varaible autostart (bool) et autorestart (enum StateRestart)
+- en cours -> mise en place bool exit code avec mutex good or not good code (verif a faire avec autrestart + ou placer le compteur de redemarrage)
 
 # Plan Global
 1- Implementation de la gestion basique des processus
@@ -95,10 +100,10 @@ kill(pid, 0)
     programs:
       nginx:
 ok      cmd: "/usr/local/bin/nginx -c /etc/nginx/test.conf" // requis                       // redemarrage
-        numprocs: 1                                         // non requis default:1         // oui
+ok      numprocs: 1                                         // non requis default:1         // oui
 ok      umask: 022                                          // non requis default:022       // oui
 ok      workingdir: /tmp                                    // non requis default:/         // oui
-        autostart: true                                     // non requis default:true
+ok      autostart: true                                     // non requis default:true
         autorestart: unexpected                             // non requis default:unexpected
         exitcodes:                                          // non requis default:0
           - 0
@@ -137,20 +142,29 @@ ok      env:                                                // non requis       
                         OK// parametre manquant obligatoire
                         // not program 
 
-numprocs -> nombres d'instances demarrer par supervisor
-umask -> masque attribuer a l'interieur du child pour les fichiers sur lesquels il travail ou va travailler
-autostart -> true or false -> demarre au lancement de supervisor
+* numprocs -> nombres d'instances demarrer par supervisor
+* umask -> masque attribuer a l'interieur du child pour les fichiers sur lesquels il travail ou va travailler
+* autostart -> true or false -> demarre au lancement de supervisor
 
-autorestart -> false redemarre pas, unexpected redemarre seulement si exitcode n'est pas celui attendue, true redemarre peu importe sortie d'erreur
-exitcode -> attendu par autorestart pour unexpected 
-startretries -> nbre d'essaie de supervisor pour lancer le processus
-starttime -> nbre de sec ou le processus doit rester run after start pour conciderer qu'il est good
-stoptime -> supervisor envoie d’abord SIGTERM pour demander un arrêt "propre" du processus.
+* autorestart -> false redemarre pas, unexpected redemarre seulement si exitcode n'est pas celui attendue, true redemarre peu importe sortie d'erreur
+* exitcode -> attendu par autorestart pour unexpected 
+
+* startretries -> nbre d'essaie de supervisor pour lancer le processus
+
+* starttime -> nbre de sec ou le processus doit rester run after start pour conciderer qu'il est good
+
+* stoptime -> supervisor envoie d’abord SIGTERM pour demander un arrêt "propre" du processus.
 Il attend ensuite stoptime secondes pour laisser au programme le temps de se fermer correctement.
 Si le programme ne s’est pas arrêté à temps, Supervisor envoie un SIGKILL pour le forcer à se terminer.
-stopsignal -> définit quel signal est envoyé au processus lorsqu’on lui demande de s’arrêter (stop)
+* stopsignal -> définit quel signal est envoyé au processus lorsqu’on lui demande de s’arrêter (stop)
+
+arret par default de processus par supervisord =>
+signal d'arret default sigterm, 
+attend stopsecs, si processus tjs vivnt
+envoie sigkill tuer brutalement 
 
 
+c'est donc sigterm qui est remplacer par stopsignal mais en cas de non reponse, c sigkill qui termine la danse
 
 # BASE C++ revision Laura
 :: Classes :: 

@@ -77,8 +77,9 @@ t_config    Parser::initConfigStruct(void) {
     def_config_struct.numProcs = 1;
     def_config_struct.umask = 022;
     def_config_struct.workingDir = "/";
-    def_config_struct.autoStart = "true";
-    def_config_struct.autoRestart = "unexpected";
+    def_config_struct.autoStart = true;
+    //def_config_struct.autoRestart = "unexpected";
+    def_config_struct.autoRestart = StateRestart::Unexpected;
     def_config_struct.exitCodes = {0};
     def_config_struct.startRetries = 3;
     def_config_struct.startTime = 1;
@@ -88,6 +89,15 @@ t_config    Parser::initConfigStruct(void) {
     def_config_struct.stderr = "";
 
     return (def_config_struct);
+}
+
+StateRestart    Parser::getStatut_autoRestart(std::string tmp) {
+    if (tmp == "true")
+        return StateRestart::True;
+    else if (tmp == "false")
+        return StateRestart::False;
+    else
+        return StateRestart::Unexpected;
 }
 
 const char* Parser::RequiredParaException::what(void) const throw() {
