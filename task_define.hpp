@@ -16,7 +16,7 @@
 #include <fcntl.h>
 #include <thread>
 #include <mutex>
-
+#include <ctime>
 
 enum ProcessStatus {
     STOPPED,

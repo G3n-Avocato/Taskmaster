@@ -23,21 +23,29 @@ class Process {
         int     stopProcess();
         
         bool                startProcess();
-        
+    
         void    killProcess();
-        pid_t   getPid() const ;
 
-        const char*         getStatus() const;
-        const bool          getautoStart() const;
-        const int           getautoRestart() const;
+        pid_t               getPid() const ;
+        const char*         getStatus() const ;
+        bool                getautoStart() const ;
+        int                 getautoRestart() const ;
+        double              getdiffTime() ;
+        int                 getCountRetries() const ;
+        int                 getStartRetries() const ; 
+        int                 getStartTime() const ;
 
+        void                setCountRetries() ;
+        void                setdiffTime() ;
+        
     private:
 
         std::vector<char*>  buildArgv(const std::string& cmd);
         std::vector<char*>  buildEnvp(const std::map<std::string, std::string>& envMap);
         void                freeCStringVector(std::vector<char*>& vec);
+        void                open_file_std();
+        bool                buildStd_process(std::string& str, int& fd);
 
-        bool                open_file_std();
         void                thread_monitoring_status();
         void                child_exec_process();
         
@@ -54,6 +62,11 @@ class Process {
         mutable std::mutex      _exitc_mutex;
         bool                    _exit_code;
 
+        std::time_t             _start;
+        std::time_t             _end;
+        double                  _difftime;
+
+        int                     _count_retries;
 };
 
 const char* enumtoString(ProcessStatus stat);

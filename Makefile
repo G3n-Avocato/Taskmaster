@@ -1,9 +1,10 @@
 NAME = Supervisor
 
-SRCS = logger.cpp 		\
-	  	parser.cpp 		\
-		process.cpp 	\
-		supervisor.cpp 	\
+SRCS = logger.cpp			\
+	  	parser.cpp			\
+		process.cpp			\
+		process_utils.cpp	\
+		supervisor.cpp		\
 		main.cpp
 
 OBJS = $(SRCS:.cpp=.o)

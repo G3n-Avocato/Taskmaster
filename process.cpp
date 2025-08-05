@@ -5,16 +5,20 @@ Process::Process(int i, std::string name, const t_config& config, ProcessStatus 
     {
         std::lock_guard<std::mutex> lock(this->_status_mutex);
         this->_status = stat;
-    }
-    {
-        std::lock_guard<std::mutex> lock(this->_exitc_mutex);
         this->_exit_code = false;
     }
+    //{
+    //    std::lock_guard<std::mutex> lock(this->_exitc_mutex);
+    //    this->_exit_code = false;
+    //}
 
-    if (!open_file_std()) 
-        exit(1); // GESTION D'ERREUR A REVOIR
+    open_file_std();
     this->_exec.argv = buildArgv(this->_config.cmd);
     this->_exec.envp = buildEnvp(this->_config.env);
+
+    this->_count_retries = 0;
+    this->_start = 0;
+    this->_end = 0;
 }
 
 Process::~Process(void) 
@@ -38,44 +42,6 @@ Process::~Process(void)
     //}
 }
 
-// reecrire ce code 
-bool    Process::open_file_std() {
-    size_t  pos;
-
-    if (!this->_config.stdout.empty()) {
-        if (this->_config.numProcs > 1) {
-            pos = this->_config.stdout.find('.');
-            this->_config.stdout.insert(pos, "_");
-            pos = this->_config.stdout.find('.');
-            this->_config.stdout.insert(pos, std::to_string(this->_id));
-        }
-        this->_exec.fd_out = open(this->_config.stdout.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-        if (this->_exec.fd_out < 0) {
-            perror("open fd_out");
-            return false ;
-        }
-    }
-    else 
-        this->_exec.fd_out = 1;
-    if (!this->_config.stderr.empty()) {
-        if (this->_config.numProcs > 1) {
-            pos = this->_config.stderr.find('.');
-            this->_config.stderr.insert(pos, "_");
-            pos = this->_config.stderr.find('.');
-            this->_config.stderr.insert(pos, std::to_string(this->_id));
-        }
-        this->_exec.fd_err = open(this->_config.stderr.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-
-        if (this->_exec.fd_err < 0) {
-            perror("open fd_err");
-            return false ;
-        }
-    }
-    else 
-        this->_exec.fd_err = 2;
-    return true ;
-}
-
 // FCT PRINT ENUM STATUS TEST // 
 const char* enumtoString(ProcessStatus stat) {
     switch (stat) {
@@ -89,67 +55,6 @@ const char* enumtoString(ProcessStatus stat) {
         case UNKNOWN: return "UNKNOWN";
         default: return "default";
     }
-}
-
-std::vector<std::string> splitWords(const std::string& input) 
-{
-    std::vector<std::string> words;
-    size_t start = 0;
-    size_t end = 0;
-
-    while (start < input.length()) 
-    {
-        while (start < input.length() && std::isspace(input[start])) {
-            start++;
-        }
-        if (start >= input.length()) 
-        {
-            return words;
-        }
-        end = start;
-        while (end < input.length() && !std::isspace(input[end])) 
-        {
-            end++;
-        }
-        words.push_back(input.substr(start, end - start));
-        start = end;
-    }
-    return words;
-}
-
-std::vector<char*> Process::buildArgv(const std::string& cmd) 
-{
-    std::vector<std::string> words = splitWords(cmd);
-    std::vector<char*> argv;
-
-    for (const std::string& word : words) 
-    {
-        argv.push_back(strdup(word.c_str()));
-    }
-    argv.push_back(nullptr);
-    return argv;
-}
-
-
-std::vector<char*> Process::buildEnvp(const std::map<std::string, std::string>& envMap) 
-{
-    std::vector<char*> envp;
-
-    for (auto it = envMap.begin(); it != envMap.end(); ++it) 
-    {
-        std::string entry = it->first + "=" + it->second;
-        envp.push_back(strdup(entry.c_str()));
-    }
-
-    envp.push_back(nullptr);
-    return envp;
-}
-
-void Process::freeCStringVector(std::vector<char*>& vec) {
-    for (char* ptr : vec) {
-        free(ptr);
-    }
-    vec.clear();
 }
 
 bool Process::startProcess()
@@ -170,11 +75,7 @@ bool Process::startProcess()
     }
     else if (this->_processus > 0) 
     {
-        //std::time_t start = std::time(nullptr);
-        //std::time_t end = std::time(nullptr);
-        //double      diff = difftime(end, start);
-        //if (startsec >= diff)
-            //good 
+        this->_start = std::time(nullptr);
 
         if (this->_exec.fd_out != 1)
             close(this->_exec.fd_out);
@@ -217,13 +118,15 @@ void    Process::thread_monitoring_status() {
                 std::lock_guard<std::mutex> lock(this->_status_mutex);
                 if (WIFEXITED(status)) {
                     this->_status = ProcessStatus::EXITED;
+                    
                     for (size_t i = 0; i < this->_config.exitCodes.size(); i++) {
                         std::cout << this->_id << " " << this->_processus << " thread " << i << " exitcode = " << this->_config.exitCodes[i] << " wexitstatus : " << WEXITSTATUS(status) << std::endl;
+                        
                         if (WEXITSTATUS(status) == this->_config.exitCodes[i]) {
-                            {
-                                std::lock_guard<std::mutex> lock(this->_exitc_mutex);
+                            //{
+                            //    std::lock_guard<std::mutex> lock(this->_exitc_mutex);
                                 this->_exit_code = true;
-                            }
+                            //}
                         }
                     }
                 }
@@ -231,6 +134,7 @@ void    Process::thread_monitoring_status() {
                     this->_status = ProcessStatus::EXITED;
                 else
                     this->_status = ProcessStatus::EXITED;
+                this->_end = std::time(nullptr);
             }
             break ;
         }
@@ -279,27 +183,6 @@ void    Process::child_exec_process() {
     exit(EXIT_FAILURE);
 }
 
-/// fonction inutile chaque processus a son env et normalement se croise pas
-/// creer les repertoire dans le parent pas seulement dans l'enfant
-//void    Process::init_workDir() {
-    
-    //if (chdir(this->_config.workingDir.c_str()) < 0) {
-    //    perror("chdir");
-    //    exit(EXIT_FAILURE);
-    //}
-    //std::string     nameDir = this->_name + "_" + std::to_string(this->_id);
-    //std::filesystem::create_directory(nameDir);
-    //if (chdir(nameDir.c_str()) < 0) {
-    //    perror("chdir");
-    //    exit(EXIT_FAILURE);
-    //}
-
-    ///
-    //std::filesystem::path cwd = std::filesystem::current_path();
-    //std::cout << "current path : " << cwd << std::endl;
-//}
-
-
 bool Process::isProcessUp()
 {
     return this->_processus > 0 && kill(this->_processus, 0) == 0;
@@ -336,31 +219,5 @@ void Process::killProcess()
     if (this->_processus > 0)
     {
         kill(this->_processus, SIGKILL);
-    }
-}
-
-pid_t Process::getPid() const 
-{
-    return this->_processus;
-}
-
-const char* Process::getStatus() const {
-    {
-        std::lock_guard<std::mutex> lock(this->_status_mutex);
-        const char* str = enumtoString(this->_status);
-        return str ; 
-    }
-}
-
-const bool        Process::getautoStart() const {
-    return this->_config.autoStart ;
-}
-
-const int  Process::getautoRestart() const {
-    switch (this->_config.autoRestart) {
-        case True: return 1;
-        case False: return 0;
-        case Unexpected: return 2;
-        default: return 2;
     }
 }

@@ -44,15 +44,15 @@ Supervisor::~Supervisor() {
     this->_processMap.clear();
 }
 
-//void    Supervisor::loop_event_autoRestart() {
-//
-//    std::map<std::string, std::vector<Process*>>::iterator  it_m = this->_processMap.begin();
-//    std::vector<Process*>::iterator                         it_vec;
-//
-//    for (it_vec = it_m->second.begin(); it_vec != it_m->second.end(); it_vec++) {
-//        if ((*it_vec)->getautoRestart )
-//
-//}
+void    Supervisor::loop_startRetries_initial_boot() {
+
+    std::map<std::string, std::vector<Process*>>::iterator  it_m = this->_processMap.begin();
+    std::vector<Process*>::iterator                         it_vec;
+
+    for (it_vec = it_m->second.begin(); it_vec != it_m->second.end(); it_vec++) {
+        if ((*it_vec)->getCountRetries )
+
+}
 
 void    Supervisor::processStart() {
     std::map<std::string, std::vector<Process*>>::iterator  it = this->_processMap.begin();

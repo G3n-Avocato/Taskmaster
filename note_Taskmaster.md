@@ -30,16 +30,20 @@ parsing :
 -> erreur stdout stderr non defini creer erreur parsing -> a changer std pas forcement definie
 -test info aleatoire  
 
-fork() child process : 
--> en cas d'erreur exec dans child impossible de free quoi que ce soit (test ex cmd: ls -la)
+-> erreur fork() child process : en cas d'erreur exec dans child impossible de free quoi que ce soit (test ex cmd: ls -la)
+
 
 list -> quel parametre touches au processus et necessite une relance de la cmd reload
 
 * Note laura : continuer a ajouter les parametres tout en adaptant supervisor
 
-- define.hpp creer
+04
+- define.hpp
 - modif varaible autostart (bool) et autorestart (enum StateRestart)
 - en cours -> mise en place bool exit code avec mutex good or not good code (verif a faire avec autrestart + ou placer le compteur de redemarrage)
+
+05
+- reecriture code, creation process_utils.cpp
 
 # Plan Global
 1- Implementation de la gestion basique des processus
@@ -162,9 +166,14 @@ arret par default de processus par supervisord =>
 signal d'arret default sigterm, 
 attend stopsecs, si processus tjs vivnt
 envoie sigkill tuer brutalement 
-
-
 c'est donc sigterm qui est remplacer par stopsignal mais en cas de non reponse, c sigkill qui termine la danse
+
+
+    startretries ≠ redémarrage automatique — Il gère uniquement la robustesse du démarrage initial.
+
+    autorestart = redémarrage automatique — Il agit après que le processus a tourné correctement au moins startsecs secondes.
+
+-verfier le status + verifier que startretries a pas depasser countretries + verifier si le temps d'attente est ok
 
 # BASE C++ revision Laura
 :: Classes :: 
