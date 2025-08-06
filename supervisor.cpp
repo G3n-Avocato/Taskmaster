@@ -30,6 +30,9 @@ Supervisor::Supervisor(std::map<std::string, t_config> configMap)
         if ((*it_vec)->getautoStart())
             (*it_vec)->startProcess();
     }
+    while (true) {
+        loop_startRetries_initial_boot();
+    }
 }
 
 Supervisor::~Supervisor() {
@@ -46,12 +49,38 @@ Supervisor::~Supervisor() {
 
 void    Supervisor::loop_startRetries_initial_boot() {
 
-    std::map<std::string, std::vector<Process*>>::iterator  it_m = this->_processMap.begin();
+    std::map<std::string, std::vector<Process*>>::iterator  it_map = this->_processMap.begin();
     std::vector<Process*>::iterator                         it_vec;
+    std::time_t                                             end;
+    double                                                  diff_time;
+    ProcessStatus                                           p_status;
 
-    for (it_vec = it_m->second.begin(); it_vec != it_m->second.end(); it_vec++) {
-        if ((*it_vec)->getCountRetries )
-
+    for (it_vec = it_map->second.begin(); it_vec != it_map->second.end() && (*it_vec)->getStartRetries() > 0; it_vec++) {
+        end = std::time(nullptr);
+        diff_time = difftime(end, (*it_vec)->getStartRun());
+        p_status = (*it_vec)->getStatus();
+        
+        if ((*it_vec)->getStartRetries() > (*it_vec)->getCountRetries()) {
+            
+            if (diff_time > (*it_vec)->getStartTime()) {
+                if (p_status == ProcessStatus::RUNNING || p_status == ProcessStatus::STARTING)
+                    continue ;
+                else if (p_status == ProcessStatus::EXITED || p_status == ProcessStatus::BACKOFF) {
+                    (*it_vec)->setProcessStatus(ProcessStatus::BACKOFF);
+                    (*it_vec)->startProcess();
+                    (*it_vec)->setCountRetries();
+                }
+            }
+        }
+        else {
+            if (diff_time > (*it_vec)->getStartTime()) {
+                if (p_status == ProcessStatus::RUNNING || p_status == ProcessStatus::STARTING)
+                    continue ;
+                else
+                    (*it_vec)->setProcessStatus(ProcessStatus::FATAL);
+            }
+        }
+    }
 }
 
 void    Supervisor::processStart() {
@@ -60,6 +89,6 @@ void    Supervisor::processStart() {
 
     for (it_vec = it->second.begin(); it_vec != it->second.end(); it_vec++) {
         (*it_vec)->startProcess();
-        std::cout << "status in supervisor : " << (*it_vec)->getStatus() << std::endl;
+        std::cout << "status in supervisor : " << (*it_vec)->getPrintStatus() << std::endl;
     }
 }

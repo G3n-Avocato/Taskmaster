@@ -7,18 +7,11 @@ Process::Process(int i, std::string name, const t_config& config, ProcessStatus 
         this->_status = stat;
         this->_exit_code = false;
     }
-    //{
-    //    std::lock_guard<std::mutex> lock(this->_exitc_mutex);
-    //    this->_exit_code = false;
-    //}
 
-    open_file_std();
     this->_exec.argv = buildArgv(this->_config.cmd);
     this->_exec.envp = buildEnvp(this->_config.env);
 
     this->_count_retries = 0;
-    this->_start = 0;
-    this->_end = 0;
 }
 
 Process::~Process(void) 
@@ -59,8 +52,14 @@ const char* enumtoString(ProcessStatus stat) {
 
 bool Process::startProcess()
 {
-    this->_processus = fork();    
-
+    open_file_std();
+    {    
+        std::lock_guard<std::mutex> lock(this->_status_mutex);            
+        this->_start_run = 0;
+        this->_exit_code = false;
+    }
+    
+    this->_processus = fork();
     if (this->_processus == -1) 
     {
         {    
@@ -75,7 +74,6 @@ bool Process::startProcess()
     }
     else if (this->_processus > 0) 
     {
-        this->_start = std::time(nullptr);
 
         if (this->_exec.fd_out != 1)
             close(this->_exec.fd_out);
@@ -89,8 +87,8 @@ bool Process::startProcess()
             this->_status = ProcessStatus::STARTING;
             std::cout << " set starting from parent " << this->_id << " : " << enumtoString(this->_status) << std::endl;
         }
-        
-        this->_t1 = std::thread(&Process::thread_monitoring_status, this);
+        if (!this->_t1.joinable())
+            this->_t1 = std::thread(&Process::thread_monitoring_status, this);
         
         return true;
     }
@@ -111,6 +109,8 @@ void    Process::thread_monitoring_status() {
             {
                 std::lock_guard<std::mutex> lock(this->_status_mutex);
                 this->_status = ProcessStatus::RUNNING;
+                if (this->_start_run == 0)
+                    this->_start_run = std::time(nullptr);
             }
         }
         else if (child_pid == this->_processus) {
@@ -122,19 +122,15 @@ void    Process::thread_monitoring_status() {
                     for (size_t i = 0; i < this->_config.exitCodes.size(); i++) {
                         std::cout << this->_id << " " << this->_processus << " thread " << i << " exitcode = " << this->_config.exitCodes[i] << " wexitstatus : " << WEXITSTATUS(status) << std::endl;
                         
-                        if (WEXITSTATUS(status) == this->_config.exitCodes[i]) {
-                            //{
-                            //    std::lock_guard<std::mutex> lock(this->_exitc_mutex);
+                        if (WEXITSTATUS(status) == this->_config.exitCodes[i])
                                 this->_exit_code = true;
-                            //}
-                        }
                     }
                 }
                 else if (WIFSIGNALED(status)) //a revoir avec le bon exit status 
                     this->_status = ProcessStatus::EXITED;
                 else
                     this->_status = ProcessStatus::EXITED;
-                this->_end = std::time(nullptr);
+                //this->_end = std::time(nullptr);
             }
             break ;
         }

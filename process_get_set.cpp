@@ -5,11 +5,18 @@ pid_t Process::getPid() const
     return this->_processus;
 }
 
-const char* Process::getStatus() const {
+const char* Process::getPrintStatus() const {
     {
         std::lock_guard<std::mutex> lock(this->_status_mutex);
         const char* str = enumtoString(this->_status);
         return str ; 
+    }
+}
+
+ProcessStatus Process::getStatus() const {
+    {
+        std::lock_guard<std::mutex> lock(this->_status_mutex);
+        return this->_status ; 
     }
 }
 
@@ -26,30 +33,32 @@ int         Process::getautoRestart() const {
     }
 }
 
-double      Process::getdiffTime() {
-    return this->_difftime ;
-    //if (this->_config.startTime > this->_difftime)
-    //    return false ;
-    //else
-    //    return true ;
+int     Process::getStartTime() const {
+    return this->_config.startTime ;
 }
 
-int     Process::getCountRetries() const {
-    return this->_count_retries ;
+std::time_t Process::getStartRun() const {
+    {
+        std::lock_guard<std::mutex> lock(this->_status_mutex);
+        return this->_start_run ;
+    }
 }
 
 int     Process::getStartRetries() const {
     return this->_config.startRetries ;
 }
 
-int     Process::getStartTime() const {
-    return this->_config.startTime ;
+int     Process::getCountRetries() const {
+    return this->_count_retries ;
 }
 
 void    Process::setCountRetries() {
     this->_count_retries++;
 }
 
-void    Process::setdiffTime() {
-    this->_difftime = difftime(this->_end, this->_start);
+void    Process::setProcessStatus(ProcessStatus tmp) {
+    {
+        std::lock_guard<std::mutex> lock(this->_status_mutex);
+        this->_status = tmp;
+    }
 }

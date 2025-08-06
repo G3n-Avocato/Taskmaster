@@ -4,6 +4,7 @@ SRCS = logger.cpp			\
 	  	parser.cpp			\
 		process.cpp			\
 		process_utils.cpp	\
+		process_get_set.cpp \
 		supervisor.cpp		\
 		main.cpp
 

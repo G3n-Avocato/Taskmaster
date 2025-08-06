@@ -27,16 +27,17 @@ class Process {
         void    killProcess();
 
         pid_t               getPid() const ;
-        const char*         getStatus() const ;
+        const char*         getPrintStatus() const ;
+        ProcessStatus       getStatus() const ;
         bool                getautoStart() const ;
         int                 getautoRestart() const ;
-        double              getdiffTime() ;
-        int                 getCountRetries() const ;
-        int                 getStartRetries() const ; 
         int                 getStartTime() const ;
+        std::time_t         getStartRun() const ;
+        int                 getStartRetries() const ; 
+        int                 getCountRetries() const ;
 
         void                setCountRetries() ;
-        void                setdiffTime() ;
+        void                setProcessStatus(ProcessStatus tmp) ;
         
     private:
 
@@ -62,9 +63,9 @@ class Process {
         mutable std::mutex      _exitc_mutex;
         bool                    _exit_code;
 
-        std::time_t             _start;
-        std::time_t             _end;
-        double                  _difftime;
+        std::time_t             _start_run;
+        //std::time_t             _end;
+        //double                  _difftime;
 
         int                     _count_retries;
 };

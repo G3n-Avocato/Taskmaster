@@ -6,7 +6,7 @@ enum ProcessStatus {
     STOPPED,        // Le processus a été arrêté volontairement ou n’a jamais été lancé.
     STARTING,       // Il est en cours de démarrage suite à une requête de lancement.
     RUNNING,        // Le processus fonctionne normalement.
-    BACKOFF,        // Il a cherché à démarrer (STARTING) mais s’est arrêté trop rapidemen (avant startsecs), donc supervisord va réessayer.
+    BACKOFF,        // Il a cherché à démarrer (STARTING) mais s’est arrêté trop rapidement (avant startsecs), donc supervisord va réessayer.
     STOPPING,       // Le processus est en cours d’arrêt — requête de stop en cours.
     EXITED,         // Le processus s’est terminé après avoir fonctionné normalement (ou anormalement), alors qu’il n’était pas supposé sortir spontanément.
     FATAL,          // Le processus ne peut pas démarrer du tout malgré plusieurs tentatives (basé sur startretries), et le superviseur abandonne.
@@ -37,13 +37,9 @@ list -> quel parametre touches au processus et necessite une relance de la cmd r
 
 * Note laura : continuer a ajouter les parametres tout en adaptant supervisor
 
-04
-- define.hpp
-- modif varaible autostart (bool) et autorestart (enum StateRestart)
+
 - en cours -> mise en place bool exit code avec mutex good or not good code (verif a faire avec autrestart + ou placer le compteur de redemarrage)
 
-05
-- reecriture code, creation process_utils.cpp
 
 # Plan Global
 1- Implementation de la gestion basique des processus
@@ -173,7 +169,7 @@ c'est donc sigterm qui est remplacer par stopsignal mais en cas de non reponse, 
 
     autorestart = redémarrage automatique — Il agit après que le processus a tourné correctement au moins startsecs secondes.
 
--verfier le status + verifier que startretries a pas depasser countretries + verifier si le temps d'attente est ok
+-verfier le status + (verifier que startretries a pas depasser count_retries) + verifier si le temps d'attente est ok
 
 # BASE C++ revision Laura
 :: Classes :: 

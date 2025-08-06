@@ -14,6 +14,8 @@ class Supervisor {
 
     private:
 
+        void    loop_startRetries_initial_boot();
+
         std::map<std::string, std::vector<Process*>> _processMap;
 };
 
