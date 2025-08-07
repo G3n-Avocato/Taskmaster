@@ -171,6 +171,33 @@ c'est donc sigterm qui est remplacer par stopsignal mais en cas de non reponse, 
 
 -verfier le status + (verifier que startretries a pas depasser count_retries) + verifier si le temps d'attente est ok
 
+
+1. État initial : STARTING
+
+    supervisord exécute le processus (fork/exec).
+
+    Il le considère dans l’état STARTING.
+
+    À partir de là, il attend que le processus reste vivant pendant un certain temps, défini par le paramètre startsecs (par défaut 1 seconde).
+
+2. Transition vers RUNNING
+
+    Si le processus est toujours en vie après startsecs, alors :
+
+        Il est considéré comme sain.
+
+        supervisord change son état en RUNNING.
+
+3. Si le processus meurt avant startsecs
+
+    Alors, il n’a jamais atteint RUNNING.
+
+    supervisord marque cela comme un échec de démarrage.
+
+    Tu verras un message comme :
+
+only startime RUNNING dis a supervisord si un processus a reussie meme si il retourne un exit 0
+oui relance ls 
 # BASE C++ revision Laura
 :: Classes :: 
 

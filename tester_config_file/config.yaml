@@ -1,6 +1,6 @@
 programs:
   ls:
-    cmd: "/bin/ls"
+    cmd: "/bin/sleep 3"
     numprocs: 2
     umask: 022
     workingdir: /tmp
@@ -9,8 +9,8 @@ programs:
     exitcodes: 
       - 0
       - 2
-    startretries: 1
-    starttime: 3
+    startretries: 2
+    starttime: 4
     stopsignal: TERM
     stoptime: 10
     stdout: /tmp/ls.stdout

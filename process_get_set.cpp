@@ -6,18 +6,21 @@ pid_t Process::getPid() const
 }
 
 const char* Process::getPrintStatus() const {
+    const char* str;
     {
         std::lock_guard<std::mutex> lock(this->_status_mutex);
-        const char* str = enumtoString(this->_status);
-        return str ; 
+        str = enumtoString(this->_status);
     }
+    return str ; 
 }
 
-ProcessStatus Process::getStatus() const {
+ProcessStatus Process::getStatus() {
+    ProcessStatus   tmp;
     {
         std::lock_guard<std::mutex> lock(this->_status_mutex);
-        return this->_status ; 
+        tmp = this->_status ; 
     }
+    return tmp ;
 }
 
 bool        Process::getautoStart() const {
@@ -38,10 +41,12 @@ int     Process::getStartTime() const {
 }
 
 std::time_t Process::getStartRun() const {
+    std::time_t tmp;
     {
-        std::lock_guard<std::mutex> lock(this->_status_mutex);
-        return this->_start_run ;
+        std::lock_guard<std::mutex> lock(this->_start_mutex);
+        tmp = this->_start_run;
     }
+    return tmp ;
 }
 
 int     Process::getStartRetries() const {

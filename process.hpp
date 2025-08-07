@@ -21,14 +21,15 @@ class Process {
 
         bool    isProcessUp();
         int     stopProcess();
-        
-        bool                startProcess();
-    
         void    killProcess();
+        
+        
+        bool                startProcess() ;
+        bool                stopThread() ;
 
         pid_t               getPid() const ;
         const char*         getPrintStatus() const ;
-        ProcessStatus       getStatus() const ;
+        ProcessStatus       getStatus() ;
         bool                getautoStart() const ;
         int                 getautoRestart() const ;
         int                 getStartTime() const ;
@@ -45,7 +46,8 @@ class Process {
         std::vector<char*>  buildEnvp(const std::map<std::string, std::string>& envMap);
         void                freeCStringVector(std::vector<char*>& vec);
         void                open_file_std();
-        bool                buildStd_process(std::string& str, int& fd);
+        bool                open_file(std::string str, int& fd);
+        bool                buildStd_process(std::string& str);
 
         void                thread_monitoring_status();
         void                child_exec_process();
@@ -60,12 +62,10 @@ class Process {
         mutable std::mutex      _status_mutex;
         ProcessStatus           _status;
 
-        mutable std::mutex      _exitc_mutex;
         bool                    _exit_code;
 
+        mutable std::mutex      _start_mutex;
         std::time_t             _start_run;
-        //std::time_t             _end;
-        //double                  _difftime;
 
         int                     _count_retries;
 };

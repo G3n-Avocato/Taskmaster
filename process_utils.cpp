@@ -61,7 +61,7 @@ void    Process::freeCStringVector(std::vector<char*>& vec) {
     vec.clear();
 }
 
-bool    Process::buildStd_process(std::string& str, int& fd) {
+bool    Process::buildStd_process(std::string& str) {
     size_t pos;
     
     if (!str.empty()) {
@@ -71,19 +71,31 @@ bool    Process::buildStd_process(std::string& str, int& fd) {
             pos = str.find('.');
             str.insert(pos, std::to_string(this->_id));
         }
-        fd = open(str.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-        if (fd < 0) {
-            perror("open std");
-            return false ;
-        }
         return true ;
     }
     return false ;
 }
 
+bool    Process::open_file(std::string str, int& fd) {
+    fd = open(str.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd < 0) {
+        perror("open std");
+        return false ;
+    }
+    return true ;
+}
+
 void    Process::open_file_std() {
-    if (!buildStd_process(this->_config.stdout, this->_exec.fd_out))
+    if (this->_config.stdout.empty())
         this->_exec.fd_out = 1;
-    if (!buildStd_process(this->_config.stderr, this->_exec.fd_err))
+    else {
+        if (!open_file(this->_config.stdout, this->_exec.fd_out))
+            this->_exec.fd_out = 1;
+    }      
+    if (this->_config.stderr.empty())
         this->_exec.fd_err = 2;
+    else {
+        if (!open_file(this->_config.stderr, this->_exec.fd_err))
+            this->_exec.fd_err = 2;
+    }
 }

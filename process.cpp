@@ -12,16 +12,17 @@ Process::Process(int i, std::string name, const t_config& config, ProcessStatus 
     this->_exec.envp = buildEnvp(this->_config.env);
 
     this->_count_retries = 0;
+
+    buildStd_process(this->_config.stdout);
+    buildStd_process(this->_config.stderr);
 }
 
 Process::~Process(void) 
 {
-    if (this->_t1.joinable())
-        this->_t1.join();
-
+    stopThread();
     {
         std::lock_guard<std::mutex> lock(this->_status_mutex);
-        std::cout << " in destruction " << this->_id << " : " << enumtoString(this->_status) << std::endl;
+        std::cout << "Destruction " << this->_id << " : " << enumtoString(this->_status) << std::endl;
     }
     freeCStringVector(this->_exec.argv);
     freeCStringVector(this->_exec.envp);
@@ -54,7 +55,7 @@ bool Process::startProcess()
 {
     open_file_std();
     {    
-        std::lock_guard<std::mutex> lock(this->_status_mutex);            
+        std::lock_guard<std::mutex> lock(this->_start_mutex);            
         this->_start_run = 0;
         this->_exit_code = false;
     }
@@ -74,21 +75,27 @@ bool Process::startProcess()
     }
     else if (this->_processus > 0) 
     {
+        {
+            std::lock_guard<std::mutex> lock(this->_status_mutex);
+            this->_status = ProcessStatus::STARTING;
+            //std::cout << " status from parent " << this->_id << " : " << enumtoString(this->_status) << std::endl;
+        }
 
         if (this->_exec.fd_out != 1)
             close(this->_exec.fd_out);
         if (this->_exec.fd_err != 2)
             close(this->_exec.fd_err);
         
+        //if (!this->_t1.joinable())
+        this->_t1 = std::thread(&Process::thread_monitoring_status, this);
         
-        std::cout << "Parent process " << this->_id << std::endl;
-        {
-            std::lock_guard<std::mutex> lock(this->_status_mutex);
-            this->_status = ProcessStatus::STARTING;
-            std::cout << " set starting from parent " << this->_id << " : " << enumtoString(this->_status) << std::endl;
-        }
-        if (!this->_t1.joinable())
-            this->_t1 = std::thread(&Process::thread_monitoring_status, this);
+        std::cout << this->_processus << " Parent process " << this->_id << std::endl;
+        //{
+        //    std::lock_guard<std::mutex> lock(this->_status_mutex);
+        //    this->_status = ProcessStatus::STARTING;
+        //}
+        //if (!this->_t1.joinable())
+        //    this->_t1 = std::thread(&Process::thread_monitoring_status, this);
         
         return true;
     }
@@ -109,9 +116,13 @@ void    Process::thread_monitoring_status() {
             {
                 std::lock_guard<std::mutex> lock(this->_status_mutex);
                 this->_status = ProcessStatus::RUNNING;
+            }
+            {
+                std::lock_guard<std::mutex> lock(this->_start_mutex);
                 if (this->_start_run == 0)
                     this->_start_run = std::time(nullptr);
             }
+            //std::cout << "RUNNING thread " << this->_id << std::endl;
         }
         else if (child_pid == this->_processus) {
             {
@@ -120,7 +131,7 @@ void    Process::thread_monitoring_status() {
                     this->_status = ProcessStatus::EXITED;
                     
                     for (size_t i = 0; i < this->_config.exitCodes.size(); i++) {
-                        std::cout << this->_id << " " << this->_processus << " thread " << i << " exitcode = " << this->_config.exitCodes[i] << " wexitstatus : " << WEXITSTATUS(status) << std::endl;
+                        //std::cout << this->_id << " " << this->_processus << " thread " << i << " exitcode = " << this->_config.exitCodes[i] << " wexitstatus : " << WEXITSTATUS(status) << std::endl;
                         
                         if (WEXITSTATUS(status) == this->_config.exitCodes[i])
                                 this->_exit_code = true;
@@ -130,14 +141,13 @@ void    Process::thread_monitoring_status() {
                     this->_status = ProcessStatus::EXITED;
                 else
                     this->_status = ProcessStatus::EXITED;
-                //this->_end = std::time(nullptr);
             }
             break ;
         }
-        {
-            std::lock_guard<std::mutex> lock(this->_status_mutex);
-            std::cout << " set statut start ou down in thread  : " << enumtoString(this->_status) << std::endl;
-        }
+        //{
+        //    std::lock_guard<std::mutex> lock(this->_status_mutex);
+        //    std::cout << this->_processus << " statut in thread  : " << enumtoString(this->_status) << std::endl;
+        //}
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
@@ -179,12 +189,18 @@ void    Process::child_exec_process() {
     exit(EXIT_FAILURE);
 }
 
+bool    Process::stopThread() {
+    if (this->_t1.joinable())
+        this->_t1.join();
+    return true ;
+}
+
+///////////////////////////////////////////////////
 bool Process::isProcessUp()
 {
     return this->_processus > 0 && kill(this->_processus, 0) == 0;
 }
 
-//////////////////////////
 int Process::stopProcess()
 {
     if (_processus <= 0)
