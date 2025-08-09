@@ -3,7 +3,7 @@
 ::::::::: A REPRENDRE :::::::::::
 
 enum ProcessStatus {
-    STOPPED,        // Le processus a été arrêté volontairement ou n’a jamais été lancé.
+    STOPPED,        // Le processus a été arrêté manuellement ou n’a jamais été lancé.
     STARTING,       // Il est en cours de démarrage suite à une requête de lancement.
     RUNNING,        // Le processus fonctionne normalement.
     BACKOFF,        // Il a cherché à démarrer (STARTING) mais s’est arrêté trop rapidement (avant startsecs), donc supervisord va réessayer.
@@ -34,11 +34,8 @@ parsing :
 
 
 list -> quel parametre touches au processus et necessite une relance de la cmd reload
-
 * Note laura : continuer a ajouter les parametres tout en adaptant supervisor
 
-
-- en cours -> mise en place bool exit code avec mutex good or not good code (verif a faire avec autrestart + ou placer le compteur de redemarrage)
 
 
 # Plan Global
@@ -62,10 +59,9 @@ ok    format (YAML)
 ok    list parametre proposer fichier 
 a revoir    charger et PARSER FICHIER de config au demarrage 
     
-5- Permettre le rechargement dynamique du fichier de config ....?
-
-6- Interface user / controller 
+5- Interface user / controller 
     en ligne de commande (start stop statut etc)
+    Permettre le rechargement dynamique du fichier de config ....?
 
 # Def + notes fct
 supervisord -> Gerer plusieurs processus : permet de lancer plusieurs services depuis un meme point central 
@@ -108,8 +104,8 @@ ok      autostart: true                                     // non requis defaul
         exitcodes:                                          // non requis default:0
           - 0
           - 2
-        startretries: 3                                     // non requis default:3
-        starttime: 5                                        // non requis default:1
+ok      startretries: 3                                     // non requis default:3
+ok      starttime: 5                                        // non requis default:1
         stopsignal: TERM                                    // non requis default:TERM
         stoptime: 10                                        // non requis default:10
 ok      stdout: /tmp/nginx.stdout                           // non requis default:NULL      // oui
@@ -147,10 +143,12 @@ ok      env:                                                // non requis       
 * autostart -> true or false -> demarre au lancement de supervisor
 
 * autorestart -> false redemarre pas, unexpected redemarre seulement si exitcode n'est pas celui attendue, true redemarre peu importe sortie d'erreur
+autorestart = redémarrage automatique — Il agit après que le processus a tourné correctement au moins startsecs secondes.
+
 * exitcode -> attendu par autorestart pour unexpected 
 
 * startretries -> nbre d'essaie de supervisor pour lancer le processus
-
+startretries ≠ redémarrage automatique — Il gère uniquement la robustesse du démarrage initial.
 * starttime -> nbre de sec ou le processus doit rester run after start pour conciderer qu'il est good
 
 * stoptime -> supervisor envoie d’abord SIGTERM pour demander un arrêt "propre" du processus.
@@ -160,44 +158,25 @@ Si le programme ne s’est pas arrêté à temps, Supervisor envoie un SIGKILL p
 
 arret par default de processus par supervisord =>
 signal d'arret default sigterm, 
-attend stopsecs, si processus tjs vivnt
+attend stopsecs, si processus tjs vivant
 envoie sigkill tuer brutalement 
 c'est donc sigterm qui est remplacer par stopsignal mais en cas de non reponse, c sigkill qui termine la danse
 
 
-    startretries ≠ redémarrage automatique — Il gère uniquement la robustesse du démarrage initial.
-
-    autorestart = redémarrage automatique — Il agit après que le processus a tourné correctement au moins startsecs secondes.
-
--verfier le status + (verifier que startretries a pas depasser count_retries) + verifier si le temps d'attente est ok
-
-
+Etape demarrage supervisord :
 1. État initial : STARTING
-
     supervisord exécute le processus (fork/exec).
-
     Il le considère dans l’état STARTING.
-
     À partir de là, il attend que le processus reste vivant pendant un certain temps, défini par le paramètre startsecs (par défaut 1 seconde).
-
 2. Transition vers RUNNING
-
     Si le processus est toujours en vie après startsecs, alors :
-
         Il est considéré comme sain.
-
         supervisord change son état en RUNNING.
-
 3. Si le processus meurt avant startsecs
-
     Alors, il n’a jamais atteint RUNNING.
-
     supervisord marque cela comme un échec de démarrage.
-
-    Tu verras un message comme :
-
 only startime RUNNING dis a supervisord si un processus a reussie meme si il retourne un exit 0
-oui relance ls 
+
 # BASE C++ revision Laura
 :: Classes :: 
 

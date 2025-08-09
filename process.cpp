@@ -12,6 +12,7 @@ Process::Process(int i, std::string name, const t_config& config, ProcessStatus 
     this->_exec.envp = buildEnvp(this->_config.env);
 
     this->_count_retries = 0;
+    this->_run_reached = false;
 
     buildStd_process(this->_config.stdout);
     buildStd_process(this->_config.stderr);
@@ -65,7 +66,7 @@ bool Process::startProcess()
     {
         {    
             std::lock_guard<std::mutex> lock(this->_status_mutex);            
-            this->_status = ProcessStatus::STOPPED;
+            this->_status = ProcessStatus::UNKNOWN;
         }
         perror("fork");
         return false;
@@ -86,17 +87,9 @@ bool Process::startProcess()
         if (this->_exec.fd_err != 2)
             close(this->_exec.fd_err);
         
-        //if (!this->_t1.joinable())
         this->_t1 = std::thread(&Process::thread_monitoring_status, this);
         
         std::cout << this->_processus << " Parent process " << this->_id << std::endl;
-        //{
-        //    std::lock_guard<std::mutex> lock(this->_status_mutex);
-        //    this->_status = ProcessStatus::STARTING;
-        //}
-        //if (!this->_t1.joinable())
-        //    this->_t1 = std::thread(&Process::thread_monitoring_status, this);
-        
         return true;
     }
     return false;
@@ -109,20 +102,19 @@ void    Process::thread_monitoring_status() {
         pid_t child_pid = waitpid(this->_processus, &status, WNOHANG);
 
         if (child_pid == -1) {
+            {
+                std::lock_guard<std::mutex> lock(this->_status_mutex);
+                this->_status = ProcessStatus::UNKNOWN;
+            }
             perror("waitpid error");
             break  ;
         }
         if (child_pid == 0) {
             {
-                std::lock_guard<std::mutex> lock(this->_status_mutex);
-                this->_status = ProcessStatus::RUNNING;
-            }
-            {
                 std::lock_guard<std::mutex> lock(this->_start_mutex);
                 if (this->_start_run == 0)
                     this->_start_run = std::time(nullptr);
             }
-            //std::cout << "RUNNING thread " << this->_id << std::endl;
         }
         else if (child_pid == this->_processus) {
             {
@@ -130,11 +122,13 @@ void    Process::thread_monitoring_status() {
                 if (WIFEXITED(status)) {
                     this->_status = ProcessStatus::EXITED;
                     
-                    for (size_t i = 0; i < this->_config.exitCodes.size(); i++) {
-                        //std::cout << this->_id << " " << this->_processus << " thread " << i << " exitcode = " << this->_config.exitCodes[i] << " wexitstatus : " << WEXITSTATUS(status) << std::endl;
-                        
-                        if (WEXITSTATUS(status) == this->_config.exitCodes[i])
+                    for (size_t i = 0; i < this->_config.exitCodes.size(); i++) {                        
+                        if (WEXITSTATUS(status) == this->_config.exitCodes[i]) {
+                            {
+                                std::lock_guard<std::mutex> lock(this->_exitcode_mutex);
                                 this->_exit_code = true;
+                            }
+                        }
                     }
                 }
                 else if (WIFSIGNALED(status)) //a revoir avec le bon exit status 
@@ -144,10 +138,6 @@ void    Process::thread_monitoring_status() {
             }
             break ;
         }
-        //{
-        //    std::lock_guard<std::mutex> lock(this->_status_mutex);
-        //    std::cout << this->_processus << " statut in thread  : " << enumtoString(this->_status) << std::endl;
-        //}
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
@@ -195,12 +185,14 @@ bool    Process::stopThread() {
     return true ;
 }
 
-///////////////////////////////////////////////////
 bool Process::isProcessUp()
 {
     return this->_processus > 0 && kill(this->_processus, 0) == 0;
 }
 
+
+
+///////////////////////////////////////////////////
 int Process::stopProcess()
 {
     if (_processus <= 0)

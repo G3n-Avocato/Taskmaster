@@ -19,13 +19,13 @@ class Process {
         Process& operator=(Process const &rhs);
         ~Process(void);
 
-        bool    isProcessUp();
         int     stopProcess();
         void    killProcess();
         
         
         bool                startProcess() ;
         bool                stopThread() ;
+        bool                isProcessUp();
 
         pid_t               getPid() const ;
         const char*         getPrintStatus() const ;
@@ -36,7 +36,10 @@ class Process {
         std::time_t         getStartRun() const ;
         int                 getStartRetries() const ; 
         int                 getCountRetries() const ;
-
+        bool                getRunReached() const ;
+        bool                getExit_Code() const ;
+        
+        void                setRunReached() ;
         void                setCountRetries() ;
         void                setProcessStatus(ProcessStatus tmp) ;
         
@@ -52,22 +55,23 @@ class Process {
         void                thread_monitoring_status();
         void                child_exec_process();
         
+        pid_t                   _processus;
         int                     _id;
         std::string             _name;
         t_config                _config;
         t_execs                 _exec;
 
-        pid_t                   _processus;
         std::thread             _t1;
         mutable std::mutex      _status_mutex;
         ProcessStatus           _status;
-
-        bool                    _exit_code;
-
         mutable std::mutex      _start_mutex;
         std::time_t             _start_run;
+        mutable std::mutex      _exitcode_mutex;
+        bool                    _exit_code;
 
+        bool                    _run_reached;
         int                     _count_retries;
+
 };
 
 const char* enumtoString(ProcessStatus stat);

@@ -57,6 +57,24 @@ int     Process::getCountRetries() const {
     return this->_count_retries ;
 }
 
+bool    Process::getRunReached() const {
+    return this->_run_reached ;
+}
+
+bool    Process::getExit_Code() const {
+    bool    tmp;
+    {
+        std::lock_guard<std::mutex> lock(this->_exitcode_mutex);
+        tmp = this->_exit_code ;
+    }
+    return tmp ;
+}
+
+
+void    Process::setRunReached() {
+    this->_run_reached = true ;
+}
+
 void    Process::setCountRetries() {
     this->_count_retries++;
 }

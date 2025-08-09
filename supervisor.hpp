@@ -15,7 +15,10 @@ class Supervisor {
     private:
 
         bool    loop_startRetries_initial_boot();
+        void    process_state_Running(Process *it_vec);
+        
         bool    allProcessFatal();
+        bool    allProcessRunning();
 
         std::map<std::string, std::vector<Process*>> _processMap;
 };

@@ -53,50 +53,62 @@ bool    Supervisor::loop_startRetries_initial_boot() {
 
     std::map<std::string, std::vector<Process*>>::iterator  it_map = this->_processMap.begin();
     std::vector<Process*>::iterator                         it_vec;
-    std::time_t                                             end;
-    double                                                  diff_time;
     ProcessStatus                                           p_status;
 
-    for (it_vec = it_map->second.begin(); it_vec != it_map->second.end() && (*it_vec)->getStartRetries() > 0; it_vec++) {
-        end = std::time(nullptr);
-        diff_time = difftime(end, (*it_vec)->getStartRun());
+    for (it_vec = it_map->second.begin(); it_vec != it_map->second.end(); it_vec++) {
+        process_state_Running(*it_vec);
         p_status = (*it_vec)->getStatus();
 
-        if ((*it_vec)->getStartRetries() > (*it_vec)->getCountRetries()) {
-            //std::cout << "difftime = " << diff_time << std::endl;
+        if (p_status != ProcessStatus::RUNNING && !(*it_vec)->getRunReached()) {
             
-            if (p_status == ProcessStatus::RUNNING || p_status == ProcessStatus::EXITED || p_status == ProcessStatus::BACKOFF) {
-                std::cout << (*it_vec)->getPid() << " difftime = " << (int)diff_time << std::endl;
-                if (diff_time >= (*it_vec)->getStartTime()) {
-                    if (p_status == ProcessStatus::RUNNING)
-                        continue ;
-                }
-                else if (p_status == ProcessStatus::EXITED || p_status == ProcessStatus::BACKOFF) {
+            if ((*it_vec)->getStartRetries() > (*it_vec)->getCountRetries()) {
+
+                if (p_status == ProcessStatus::EXITED || p_status == ProcessStatus::BACKOFF) {
                     std::cout << (*it_vec)->getPid() << " stat = " << (*it_vec)->getPrintStatus() << std::endl;
                     (*it_vec)->stopThread();
                     (*it_vec)->setProcessStatus(ProcessStatus::BACKOFF);
-                    (*it_vec)->startProcess();
                     (*it_vec)->setCountRetries();
+                    (*it_vec)->startProcess();
                 }
             }
-        }
-        else {
-            if (p_status == ProcessStatus::RUNNING) {
-                if (diff_time > (*it_vec)->getStartTime())
-                    continue ;
-            }
-            else if (p_status == ProcessStatus::STARTING)
-                continue ;
             else {
                 (*it_vec)->setProcessStatus(ProcessStatus::FATAL);
                 if (allProcessFatal())
                     return false ;
             }
         }
+        if ((*it_vec)->getRunReached &&)
+        if (allProcessRunning())
+            return false ;
     }
     return true ;
 }
 
+bool    Supervisor::loop_autoRestart() {
+    ProcessStatus   p_status = (*it_vec).getStatus();
+    int             config_restart = (*it_vec).getautoRestart();
+
+    if ((*it_vec).getRunReached && p_status == ProcessStatus::EXITED) {
+        if (config_restart == 1 || config_restart == 2 && !(*it_vec).getExit_Code()) {
+            (*it_vec).stopThread();
+            (*it_vec).startProcess();
+        }
+    }
+    return true ;
+}
+
+void    Supervisor::process_state_Running(Process *it_vec) {
+    std::time_t     end = std::time(nullptr);
+    double          diff_time = difftime(end, (*it_vec).getStartRun());
+    ProcessStatus   p_status = (*it_vec).getStatus();
+
+    if (p_status == ProcessStatus::STARTING && (*it_vec).isProcessUp()) {
+        if (diff_time >= (*it_vec).getStartTime()) {
+            (*it_vec).setProcessStatus(ProcessStatus::RUNNING);
+            (*it_vec).setRunReached();
+        }
+    }
+}
 
 // fonction de test pour stopper la boucle startretries en cas de fatal all //
 // a enlever avant fin du projet
@@ -107,6 +119,24 @@ bool    Supervisor::allProcessFatal() {
     for (it_vec = it_map->second.begin(); it_vec != it_map->second.end(); ) {
         if ((*it_vec)->getStatus() == ProcessStatus::FATAL) {
             std::cout << "    " << (*it_vec)->getPid() << " end startretries : retriescount : " << (*it_vec)->getCountRetries() << " status => " << (*it_vec)->getPrintStatus() << std::endl;
+            it_vec++;
+        }
+        else
+            return false ;
+    }
+    return true ;
+}
+
+
+// fonction de test pour stopper la boucle lorsque all running //
+// a enlever avant fin du projet
+bool    Supervisor::allProcessRunning() {
+    std::map<std::string, std::vector<Process*>>::iterator  it_map = this->_processMap.begin();
+    std::vector<Process*>::iterator                         it_vec;
+
+    for (it_vec = it_map->second.begin(); it_vec != it_map->second.end(); ) {
+        if ((*it_vec)->getRunReached()) {
+            std::cout << "    " << (*it_vec)->getPid() << " all running : " << (*it_vec)->getCountRetries() << " status => " << (*it_vec)->getPrintStatus() << " : " << (*it_vec)->getRunReached() << std::endl;
             it_vec++;
         }
         else
