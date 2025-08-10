@@ -15,6 +15,7 @@ class Supervisor {
     private:
 
         bool    loop_startRetries_initial_boot();
+        bool    loop_autoRestart(Process *it_vec);
         void    process_state_Running(Process *it_vec);
         
         bool    allProcessFatal();

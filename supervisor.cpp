@@ -72,30 +72,49 @@ bool    Supervisor::loop_startRetries_initial_boot() {
                 }
             }
             else {
+                //(*it_vec)->stopThread();
                 (*it_vec)->setProcessStatus(ProcessStatus::FATAL);
                 if (allProcessFatal())
                     return false ;
             }
         }
-        if ((*it_vec)->getRunReached &&)
+        //else if ((*it_vec)->getRunReached())
+        //loop_autoRestart(*it_vec);
+
         if (allProcessRunning())
             return false ;
     }
     return true ;
-}
+} 
 
-bool    Supervisor::loop_autoRestart() {
-    ProcessStatus   p_status = (*it_vec).getStatus();
-    int             config_restart = (*it_vec).getautoRestart();
-
-    if ((*it_vec).getRunReached && p_status == ProcessStatus::EXITED) {
-        if (config_restart == 1 || config_restart == 2 && !(*it_vec).getExit_Code()) {
-            (*it_vec).stopThread();
-            (*it_vec).startProcess();
-        }
-    }
-    return true ;
-}
+//bool    Supervisor::loop_autoRestart(Process *it_vec) {
+//    ProcessStatus   p_status = (*it_vec).getStatus();
+//    int             config_restart = (*it_vec).getautoRestart();
+//
+//    if ((*it_vec).getRunReached() && p_status == ProcessStatus::EXITED) {
+//        
+//        if (config_restart == 1 || (config_restart == 2 && !(*it_vec).getExit_Code())) {
+//            
+//            if ((*it_vec).count_restart == 0)
+//                (*it_vec).start_autorestart = std::time(nullptr);
+//
+//            if ((*it_vec).count_restart > 5) {
+//                std::time_t end_auto = std::time(nullptr);
+//                double      diff_time = difftime(end_auto, (*it_vec).start_autorestart);
+//                if (diff_time < 5) {
+//                    //(*it_vec).stopThread();
+//                    (*it_vec).setProcessStatus(ProcessStatus::FATAL);
+//                    return false ;
+//                }
+//            }
+//            std::cout << (*it_vec).getPid() << " Restart auto : " << (*it_vec).count_restart << " status = " << (*it_vec).getPrintStatus() << std::endl;
+//            (*it_vec).count_restart++;
+//            (*it_vec).stopThread();
+//            (*it_vec).startProcess();
+//        }
+//    }
+//    return true ;
+//}
 
 void    Supervisor::process_state_Running(Process *it_vec) {
     std::time_t     end = std::time(nullptr);

@@ -42,6 +42,9 @@ class Process {
         void                setRunReached() ;
         void                setCountRetries() ;
         void                setProcessStatus(ProcessStatus tmp) ;
+
+        //int                 count_restart;
+        //std::time_t         start_autorestart;
         
     private:
 

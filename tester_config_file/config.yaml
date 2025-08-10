@@ -1,16 +1,16 @@
 programs:
   ls:
-    cmd: "/bin/ls"
-    numprocs: 2
+    cmd: "sleep 3"
+    numprocs: 4
     umask: 022
     workingdir: /tmp
     autostart: true
-    autorestart: unexpected
+    autorestart: true
     exitcodes: 
       - 0
       - 2
-    startretries: 2
-    starttime: 0
+    startretries: 1
+    starttime: 2
     stopsignal: TERM
     stoptime: 10
     stdout: /tmp/ls.stdout

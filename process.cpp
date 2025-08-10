@@ -16,6 +16,9 @@ Process::Process(int i, std::string name, const t_config& config, ProcessStatus 
 
     buildStd_process(this->_config.stdout);
     buildStd_process(this->_config.stderr);
+
+    //this->count_restart = 0;
+    //this->start_autorestart = 0;
 }
 
 Process::~Process(void) 
@@ -164,16 +167,14 @@ void    Process::child_exec_process() {
     if (this->_exec.fd_err != 2)
         close(this->_exec.fd_err);
 
-    //std::vector<char*> argv = buildArgv(this->_config.cmd);
-    //std::vector<char*> envp = buildEnvp(this->_config.env);
-    
-    if (execve(this->_exec.argv[0], this->_exec.argv.data(), this->_exec.envp.data()) == -1) {
-        std::cerr << "Execve failed : " << strerror(errno) << std::endl;
-        freeCStringVector(this->_exec.argv);
-        freeCStringVector(this->_exec.envp);
-        //this->~Process();
-        exit(EXIT_FAILURE);
-    }
+    execve(this->_exec.argv[0], this->_exec.argv.data(), this->_exec.envp.data());
+    //if (execve(this->_exec.argv[0], this->_exec.argv.data(), this->_exec.envp.data()) == -1) {
+    //    std::cerr << "Execve failed : " << strerror(errno) << std::endl;
+    //    freeCStringVector(this->_exec.argv);
+    //    freeCStringVector(this->_exec.envp);
+    //    this->~Process();
+    //    exit(EXIT_FAILURE);
+    //}
     freeCStringVector(this->_exec.argv);
     freeCStringVector(this->_exec.envp);
     exit(EXIT_FAILURE);
