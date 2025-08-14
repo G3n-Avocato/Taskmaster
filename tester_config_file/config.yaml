@@ -1,7 +1,7 @@
 programs:
   ls:
     cmd: "sleep 3"
-    numprocs: 4
+    numprocs: 3
     umask: 022
     workingdir: /tmp
     autostart: true
@@ -10,7 +10,7 @@ programs:
       - 0
       - 2
     startretries: 1
-    starttime: 2
+    starttime: 4
     stopsignal: TERM
     stoptime: 10
     stdout: /tmp/ls.stdout

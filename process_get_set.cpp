@@ -7,19 +7,19 @@ pid_t Process::getPid() const
 
 const char* Process::getPrintStatus() const {
     const char* str;
-    {
-        std::lock_guard<std::mutex> lock(this->_status_mutex);
+    //{
+    //    std::lock_guard<std::mutex> lock(this->_status_mutex);
         str = enumtoString(this->_status);
-    }
+    //}
     return str ; 
 }
 
 ProcessStatus Process::getStatus() {
     ProcessStatus   tmp;
-    {
-        std::lock_guard<std::mutex> lock(this->_status_mutex);
+    //{
+    //    std::lock_guard<std::mutex> lock(this->_status_mutex);
         tmp = this->_status ; 
-    }
+    //}
     return tmp ;
 }
 
@@ -42,10 +42,10 @@ int     Process::getStartTime() const {
 
 std::time_t Process::getStartRun() const {
     std::time_t tmp;
-    {
-        std::lock_guard<std::mutex> lock(this->_start_mutex);
+    //{
+    //    std::lock_guard<std::mutex> lock(this->_start_mutex);
         tmp = this->_start_run;
-    }
+    //}
     return tmp ;
 }
 
@@ -63,10 +63,10 @@ bool    Process::getRunReached() const {
 
 bool    Process::getExit_Code() const {
     bool    tmp;
-    {
-        std::lock_guard<std::mutex> lock(this->_exitcode_mutex);
+    //{
+    //    std::lock_guard<std::mutex> lock(this->_exitcode_mutex);
         tmp = this->_exit_code ;
-    }
+    //}
     return tmp ;
 }
 
@@ -80,8 +80,8 @@ void    Process::setCountRetries() {
 }
 
 void    Process::setProcessStatus(ProcessStatus tmp) {
-    {
-        std::lock_guard<std::mutex> lock(this->_status_mutex);
+    //{
+    //    std::lock_guard<std::mutex> lock(this->_status_mutex);
         this->_status = tmp;
-    }
+    //}
 }

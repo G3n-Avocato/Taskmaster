@@ -15,7 +15,7 @@ class Process {
     public:
     
         Process(int i, std::string name, const t_config& config, ProcessStatus stat);
-        Process(Process const &src);
+        //Process(Process const &src);
         Process& operator=(Process const &rhs);
         ~Process(void);
 
@@ -64,12 +64,12 @@ class Process {
         t_config                _config;
         t_execs                 _exec;
 
-        std::thread             _t1;
-        mutable std::mutex      _status_mutex;
+        //std::thread             _t1;
+        //mutable std::mutex      _status_mutex;
         ProcessStatus           _status;
-        mutable std::mutex      _start_mutex;
+        //mutable std::mutex      _start_mutex;
         std::time_t             _start_run;
-        mutable std::mutex      _exitcode_mutex;
+        //mutable std::mutex      _exitcode_mutex;
         bool                    _exit_code;
 
         bool                    _run_reached;

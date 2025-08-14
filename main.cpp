@@ -55,7 +55,7 @@ int main (int argc, char** argv) {
 
         Supervisor test1(programs_tab);
 
-        //test1.processStart();
+        //test1.processStart();                                                                        
 
     } catch (const YAML::BadFile &e) {
         std::cerr << "Unable to open YAML file : " << e.what() << std::endl;

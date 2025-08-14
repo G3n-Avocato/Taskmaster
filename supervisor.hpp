@@ -21,7 +21,7 @@ class Supervisor {
         bool    allProcessFatal();
         bool    allProcessRunning();
 
-        std::map<std::string, std::vector<Process*>> _processMap;
+        std::map<std::string, std::vector<Process>> _processMap;
 };
 
 # endif
