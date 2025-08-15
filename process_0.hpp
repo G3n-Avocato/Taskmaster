@@ -14,8 +14,8 @@ class Process {
     
     public:
     
-        Process(int i, std::string name, const t_config& config);
-        Process(Process const &src);
+        Process(int i, std::string name, const t_config& config, ProcessStatus stat);
+        //Process(Process const &src);
         Process& operator=(Process const &rhs);
         ~Process(void);
 
@@ -24,6 +24,7 @@ class Process {
         
         
         bool                startProcess() ;
+        bool                stopThread() ;
         bool                isProcessUp();
 
         pid_t               getPid() const ;
@@ -54,6 +55,7 @@ class Process {
         bool                open_file(std::string str, int& fd);
         bool                buildStd_process(std::string& str);
 
+        void                thread_monitoring_status();
         void                child_exec_process();
         
         pid_t                   _processus;
@@ -62,8 +64,12 @@ class Process {
         t_config                _config;
         t_execs                 _exec;
 
+        //std::thread             _t1;
+        //mutable std::mutex      _status_mutex;
         ProcessStatus           _status;
+        //mutable std::mutex      _start_mutex;
         std::time_t             _start_run;
+        //mutable std::mutex      _exitcode_mutex;
         bool                    _exit_code;
 
         bool                    _run_reached;

@@ -54,7 +54,7 @@ int main (int argc, char** argv) {
 //////////////////////////////////////////////////////////////////////
 
         Supervisor test1(programs_tab);
-
+        test1.start_init_boot();   
         //test1.processStart();                                                                        
 
     } catch (const YAML::BadFile &e) {
