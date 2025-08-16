@@ -27,7 +27,6 @@ bool    parser_file_yaml(char *file, t_process_para* procs) {
 
     enum parsing_state state = ST_INIT;
     char*   last_key = NULL;
-    t_config current = {0};
 
     procs->config = NULL;
     procs->count = 0;
@@ -39,106 +38,77 @@ bool    parser_file_yaml(char *file, t_process_para* procs) {
             case YAML_SCALAR_EVENT:
 
                 char* val = strdup((char *)event.data.scalar.value);
+                if (!val) {
+                    free_lib_yaml(&parser, &event, fd);
+                    return false ;
+                }
 
-                if (state == ST_INIT && !strcmp(val, "programs")) {
-                    state = ST_IN_PROGRAMS;
+                if (state == ST_INIT) {
+                    if (!strcmp(val, "programs"))
+                        state = ST_IN_PROGRAMS;
+                    else {
+                        fprintf(stderr, "Expected 'programs' key\n");
+                        free(val);
+                        free_lib_yaml(&parser, &event, fd);
+                        return false ;
+                    }
                     free(val);
                 }
                 else if (state == ST_IN_PROGRAMS) {
-                    procs->count++;
-                    procs->config = realloc(procs->config, sizeof(t_config) * procs->count);
-                    current = (t_config){0};
-                    procs->config[procs->count - 1] = current;
-                    procs->config[procs->count - 1].name = strdup(val);
-                    state = ST_IN_PROGRAM;
-                    free(val);
-                }
-                else if (state == ST_IN_PROGRAM) {
-                    last_key = strdup(val);
+                    if (!parsing_name(procs, val)) {
+                        free_var_yaml(&val, &last_key);
+                        free_lib_yaml(&parser, &event, fd);
+                        return false ;
+                    }
                     state = ST_IN_CONFIG;
-                    free(val);
+                    free_var_yaml(&val, &last_key);
                 }
                 else if (state == ST_IN_CONFIG) {
-                    
                     if (!last_key) {
                         last_key = strdup(val);
+                        if (!last_key) {
+                            free_lib_yaml(&parser, &event, fd);
+                            free(val);
+                            return false ;
+                        }
                         free(val);
                     }
                     else {
                         t_config*   cfg = &procs->config[procs->count - 1];
                         
-                        if (!strcmp(last_key, "cmd"))
-                            cfg->cmd = strdup(val);
-                        else if (!strcmp(last_key, "numprocs")) {
-                            if (!int_parser(val, &cfg->numProcs)) {
-                                free(last_key);
-                                return false ; // free ce qu'il y a free
-                            }
+                        if (!parser_list_options_config(last_key, val, cfg)) {
+                            free_var_yaml(&val, &last_key);
+                            free_lib_yaml(&parser, &event, fd);
+                            return false ; 
                         }
-                        else if (!strcmp(last_key, "umask")) {
-                            if (!int_parser(val, &cfg->umask)) {
-                                free(last_key);
-                                return false ; // free ce qu'il y a free
-                            }
-                        } 
-                        else if (!strcmp(last_key, "workingdir")) {
-                            cfg->workingDir = strdup(val);
-                        }
-                        else if (!strcmp(last_key, "autostart")) {
-                            if (!bool_parser(val, &cfg->autoStart)) {
-                                free(last_key);
-                                return false ;
-                            }
-                        } 
-                        else if (!strcmp(last_key, "autorestart")) {
-                            cfg->autoRestart = strdup(val);
-                        }
-                        else if (!strcmp(last_key, "startretries")) {
-                            if (!int_parser(val, &cfg->startRetries)) {
-                                free(last_key);
-                                return false ; // free ce qu'il y a free
-                            }
-                        }
-                        else if (!strcmp(last_key, "starttime")) {
-                            if (!int_parser(val, &cfg->startTime)) {
-                                free(last_key);
-                                return false ; // free ce qu'il y a free
-                            }
-                        }
-                        else if (!strcmp(last_key, "stopsignal")) {
-                            cfg->stopSignal = strdup(val);
-                        }
-                        else if (!strcmp(last_key, "stoptime")) {
-                            if (!int_parser(val, &cfg->stopTime)) {
-                                free(last_key);
-                                return false ; // free ce qu'il y a free
-                            }
-                        }
-                        else if (!strcmp(last_key, "stdout")) {
-                            cfg->stdout = strdup(val);
-                        }
-                        else if (!strcmp(last_key, "stderr")) {
-                            cfg->stderr = strdup(val);
-                        }
-                        else if (!strcmp(last_key, "env")) {
-                            printf("env a faire\n");
-                        }
-                        free(val);
-                        free(last_key);
-                        last_key = NULL;
+                        free_var_yaml(&val, &last_key);
                     }
                 }
                 break ;
             case YAML_SEQUENCE_START_EVENT:
                 if (last_key && !strcmp(last_key, "exitcodes")) {
-                t_config* cfg = &procs->config[procs->count - 1];
-                if (!parsing_exitcodes(&parser, &event, cfg)) {
-                    free(val);
+                    t_config* cfg = &procs->config[procs->count - 1];
+                    
+                    if (!parser_exitcodes(&parser, &event, cfg)) {
+                        free_var_yaml(&val, &last_key);
+                        free_lib_yaml(&parser, &event, fd);
+                        return false;
+                    }
                     free(last_key);
-                    return false;
+                    last_key = NULL;
                 }
-                free(last_key);
-                last_key = NULL;
+                break ;
+            case YAML_MAPPING_START_EVENT:
+                if (last_key && !strcmp(last_key, "env")) {
+                    t_config* cfg = &procs->config[procs->count - 1];
+
+                    if (!parser_env(&parser, &event, cfg)) {
+                        free_var_yaml(&val, &last_key);
+                        free_lib_yaml(&parser, &event, fd);
+                        return false;
+                    }
+                    free(last_key);
+                    last_key = NULL;
                 }
                 break ;
             case YAML_MAPPING_END_EVENT:
@@ -158,84 +128,39 @@ bool    parser_file_yaml(char *file, t_process_para* procs) {
     yaml_parser_delete(&parser);
     fclose(fd);
 
+    // fonction qui verifie pour chaque struct que cmd est present 
+
     return true ;
 }
 
 
-bool     int_parser(char* str, int *out) {
+bool     int_parser(char* val, int *out) {
     char *end;
     errno = 0;
 
-    long int val = strtol(str, &end, 10);
+    long int res = strtol(val, &end, 10);
 
-    if (errno == ERANGE || val > INT_MAX || val < INT_MIN) {
-        free(str);
+    if (errno == ERANGE || res > INT_MAX || res < INT_MIN)
         return false ;
-    }
 
-    if (end == str || *end != '\0') {
-        free(str);
+    if (end == val || *end != '\0')
         return false ;
-    }
 
-    *out = (int)val;
+    *out = (int)res;
     return true ;
 }
 
-bool    bool_parser(char *str, bool* out) {
+bool    bool_parser(char *val, bool* out) {
     char* _tr = "true";
     char* _fa = "false";
 
-    if (!strncmp(str, _tr, 5)) {
+    if (!strncmp(val, _tr, 5)) {
         *out = true ;
         return true ;
     }
-    else if (!strncmp(str, _fa, 6)) {
+    else if (!strncmp(val, _fa, 6)) {
         *out = false ;
         return true ;
     }
-    free(str);
     return false;
-}
-
-bool    parsing_exitcodes(yaml_parser_t* parser, yaml_event_t* event, t_config* cfg) {
-    if (event->type != YAML_SEQUENCE_START_EVENT) {
-        fprintf(stderr, "Expected a sequence for exitcodes\n");
-        return false;
-    }
-
-    int*    codes = NULL;
-    size_t  code_count = 0;
-
-    while (1) {
-        yaml_parser_parse(parser, event);
-
-        if (event->type == YAML_SEQUENCE_END_EVENT) {
-            break;
-        }
-
-        if (event->type != YAML_SCALAR_EVENT) {
-            fprintf(stderr, "Expected scalar in exitcodes sequence\n");
-            return false;
-        }
-
-        int code;
-        if (!int_parser((char*)event->data.scalar.value, &code))
-            return false ; 
-        
-        int *tmp = realloc(codes, sizeof(int) * (code_count + 1));
-        if (!tmp) {
-            free(codes);
-            fprintf(stderr, "Memory error\n");
-            return false;
-        }
-        codes = tmp;
-        codes[code_count++] = code;
-
-        yaml_event_delete(event);
-    }
-    cfg->exitCodes.codes = codes;
-    cfg->exitCodes.count = code_count;
-    
-    return true ;
 }

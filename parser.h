@@ -8,12 +8,13 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <limits.h>
+#include <signal.h>
 
-enum StateRestart {
-    True,
-    False,
-    Unexpected,
-};
+typedef enum Restart_State {
+    TRUE,
+    FALSE,
+    UNEXPECTED
+} t_StateRestart;
 
 typedef struct env_p {
     char*           key;
@@ -28,15 +29,18 @@ typedef struct exitcodes {
 typedef struct s_config {
     char*                               name;
     char*                               cmd;
+    bool                                has_cmd;
     int                                 numProcs;
     int                                 umask;
     char*                               workingDir;
     bool                                autoStart;
-    char*                               autoRestart;
+    t_StateRestart                      autoRestart;
+    //char*                               autoRestart;
     struct exitcodes                    exitCodes;
     int                                 startRetries;
     int                                 startTime;
-    char*                               stopSignal;
+    int                                 stopSignal;
+    //char*                               stopSignal;
     int                                 stopTime;
     char*                               stdout;
     char*                               stderr;
@@ -53,80 +57,58 @@ typedef struct s_process_para {
 enum parsing_state {
     ST_INIT,
     ST_IN_PROGRAMS,
-    ST_IN_PROGRAM,
     ST_IN_CONFIG,
     ST_KEY
 };
 
+typedef struct s_signal_entry {
+    const char *name;
+    int         value;
+} t_signal_entry;
 
-// struct cyaml lib
+static const t_signal_entry signalMap[] = {
+    {"HUP", SIGHUP}, {"INT", SIGINT}, {"QUIT", SIGQUIT},
+    {"ILL", SIGILL}, {"TRAP", SIGTRAP}, {"ABRT", SIGABRT},
+    {"IOT", SIGIOT}, {"BUS", SIGBUS}, {"FPE", SIGFPE},
+    {"KILL", SIGKILL}, {"USR1", SIGUSR1}, {"SEGV", SIGSEGV},
+    {"USR2", SIGUSR2}, {"PIPE", SIGPIPE}, {"ALRM", SIGALRM},
+    {"TERM", SIGTERM}, {"STKFLT", SIGSTKFLT}, {"CHLD", SIGCHLD},
+    {"CONT", SIGCONT}, {"STOP", SIGSTOP}, {"TSTP", SIGTSTP},
+    {"TTIN", SIGTTIN}, {"TTOU", SIGTTOU}, {"URG", SIGURG},
+    {"XCPU", SIGXCPU}, {"XFSZ", SIGXFSZ}, {"VTALRM", SIGVTALRM},
+    {"PROF", SIGPROF}, {"WINCH", SIGWINCH}, {"POLL", SIGPOLL},
+    {"IO", SIGIO}, {"PWR", SIGPWR}, {"SYS", SIGSYS}
 
-//static const cyaml_config_t cyaml_cfg = {
-//    .log_fn    = cyaml_log,
-//    .mem_fn    = cyaml_mem,
-//    .log_level = CYAML_LOG_WARNING,
-//};
-//
-//static const cyaml_schema_field_t exitcodes_entry[] = {
-//    CYAML_FIELD_INT("code", CYAML_FLAG_DEFAULT, struct exitcodes, codes),
-//    CYAML_FIELD_END
-//};
-//
-//static const cyaml_schema_value_t exitcode_schema = {
-//    CYAML_VALUE_MAPPING(CYAML_FLAG_POINTER, struct exitcodes, exitcodes_entry),
-//};
-//
-//static const cyaml_schema_field_t env_fields[] = {
-//    CYAML_FIELD_STRING_PTR("key", CYAML_FLAG_DEFAULT, struct env_p, key),
-//    CYAML_FIELD_STRING_PTR("value", CYAML_FLAG_DEFAULT, struct env_p, value),
-//    CYAML_FIELD_END
-//};
-//
-//static const cyaml_schema_value_t env_schema = {
-//    CYAML_VALUE_MAPPING(CYAML_FLAG_POINTER, struct env_p, env_fields),
-//};
-//
-//static const cyaml_schema_field_t config_fields[] = {
-//    CYAML_FIELD_STRING_PTR("cmd", CYAML_FLAG_POINTER, struct s_config, cmd, 0, CYAML_UNLIMITED),
-//    CYAML_FIELD_INT("numprocs", CYAML_FLAG_DEFAULT, struct s_config, numProcs),
-//    CYAML_FIELD_INT("umask", CYAML_FLAG_DEFAULT, struct s_config, umask),
-//    CYAML_FIELD_STRING_PTR("workingdir", CYAML_FLAG_POINTER, struct s_config, workingDir, 0, CYAML_UNLIMITED),
-//    CYAML_FIELD_BOOL("autostart", CYAML_FLAG_DEFAULT, struct s_config, autoStart),
-//    CYAML_FIELD_STRING_PTR("autorestart", CYAML_FLAG_POINTER, struct s_config, autoRestart, 0, CYAML_UNLIMITED),
-//    CYAML_FIELD_SEQUENCE("exitcodes", CYAML_FLAG_POINTER, struct s_config, exitCodes, &exitcodes_schema, 0, CYAML_UNLIMITED),
-//    CYAML_FIELD_INT("startretries", CYAML_FLAG_DEFAULT, struct s_config, startRetries),
-//    CYAML_FIELD_INT("starttime", CYAML_FLAG_DEFAULT, struct s_config, startTime),
-//    CYAML_FIELD_STRING_PTR("stopsignal", CYAML_FLAG_POINTER, struct s_config, stopSignal, 0, CYAML_UNLIMITED),
-//    CYAML_FIELD_INT("stoptime", CYAML_FLAG_DEFAULT, struct s_config, stopTime),
-//    CYAML_FIELD_STRING_PTR("stdout", CYAML_FLAG_POINTER, struct s_config, stdout, 0, CYAML_UNLIMITED),
-//    CYAML_FIELD_STRING_PTR("stderr", CYAML_FLAG_POINTER, struct s_config, stderr, 0, CYAML_UNLIMITED),
-//    CYAML_FIELD_SEQUENCE("env", CYAML_FLAG_POINTER, struct s_config, env, &env_schema, 0, CYAML_UNLIMITED),
-//    CYAML_FIELD_END
-//};
-//
-//static const cyaml_schema_value_t config_schema = {
-//    CYAML_VALUE_MAPPING(CYAML_FLAG_POINTER, struct s_config, config_fields),
-//};
-//
-//static const cyaml_schema_field_t process_para_fields[] = {
-//    CYAML_FIELD_SEQUENCE("programs", CYAML_FLAG_POINTER, struct s_process_para, config, &config_schema, 0, CYAML_UNLIMITED),
-//    CYAML_FIELD_END
-//};
-//
-//static const cyaml_schema_value_t process_para_schema = {
-//    CYAML_VALUE_MAPPING(CYAML_FLAG_POINTER, struct s_process_para, process_para_fields),
-//};
+};
 
+static const size_t signal_map_size = sizeof(signalMap) / sizeof(signalMap[0]);
 
 ///fonction declaration
 
+// parser.c //
 bool    parser_name_file(char **argv, int argc);
 bool    parser_file_yaml(char *file, t_process_para* procs);
 bool    int_parser(char* str, int *out);
 bool    bool_parser(char *str, bool* out);
-bool    parsing_exitcodes(yaml_parser_t* parser, yaml_event_t* event, t_config* cfg);
 
+// parser_config.c //
+bool    parsing_name(t_process_para* procs, char* val);
+bool    parser_list_options_config(char *last_key, char *val, t_config* cfg);
+bool    parser_numprocs(char *val, t_config* cfg);
+bool    parser_umask(char *val, t_config* cfg);
+bool    parser_autorestart(char *val, t_config* cfg);
+bool    parser_startretries(char *val, t_config* cfg);
+bool    parser_exitcodes_no_sequence(char* val, char* last_key, t_config* cfg);
+bool    parser_starttime(char *val, t_config *cfg);
+bool    parser_stopsignal(char *val, t_config* cfg);
+bool    parser_stoptime(char *val, t_config *cfg);
+bool    parser_env(yaml_parser_t* parser, yaml_event_t* event, t_config* cfg);
+bool    parser_exitcodes(yaml_parser_t* parser, yaml_event_t* event, t_config* cfg);
+
+// free_parser.c //
 void    free_process_para(t_process_para* procs);
 void    free_config(t_config *cfg);
+void    free_var_yaml(char **val, char **last_key);
+void    free_lib_yaml(yaml_parser_t* parser, yaml_event_t* event, FILE* fd);
 
 #endif
