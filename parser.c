@@ -28,7 +28,7 @@ bool    parser_name_file(char **argv, int argc) {
     return true ;
 }
 
-bool    parser_file_yaml(char *file, t_process_para* procs) {
+bool    parser_file_yaml(char *file, t_process_para* para) {
 
     FILE*   fd = fopen(file, "r");
     if (!fd) {
@@ -44,8 +44,8 @@ bool    parser_file_yaml(char *file, t_process_para* procs) {
 
     yaml_parser_initialize(&parser);
     yaml_parser_set_input_file(&parser, fd);
-    procs->config = NULL;
-    procs->count = 0;
+    para->config = NULL;
+    para->count = 0;
 
     while (!done) {
         if (!syntax_error_file_config(&parser, &event, fd)) {
@@ -74,7 +74,7 @@ bool    parser_file_yaml(char *file, t_process_para* procs) {
                     free(val);
                 }
                 else if (state == ST_IN_PROGRAMS) {
-                    if (!parsing_name(procs, val)) {
+                    if (!parsing_name(para, val)) {
                         free_var_yaml(&val, &last_key);
                         free_lib_yaml(&parser, &event, fd);
                         return false ;
@@ -93,7 +93,7 @@ bool    parser_file_yaml(char *file, t_process_para* procs) {
                         free(val);
                     }
                     else {
-                        t_config*   cfg = &procs->config[procs->count - 1];
+                        t_config*   cfg = &para->config[para->count - 1];
                         
                         if (!parser_list_options_config(last_key, val, cfg)) {
                             free_var_yaml(&val, &last_key);
@@ -106,7 +106,7 @@ bool    parser_file_yaml(char *file, t_process_para* procs) {
                 break ;
             case YAML_SEQUENCE_START_EVENT:
                 if (last_key && !strcmp(last_key, "exitcodes")) {
-                    t_config* cfg = &procs->config[procs->count - 1];
+                    t_config* cfg = &para->config[para->count - 1];
                     
                     if (!parser_exitcodes(&parser, &event, cfg)) {
                         free_var_yaml(&val, &last_key);
@@ -119,7 +119,7 @@ bool    parser_file_yaml(char *file, t_process_para* procs) {
                 break ;
             case YAML_MAPPING_START_EVENT:
                 if (last_key && !strcmp(last_key, "env")) {
-                    t_config* cfg = &procs->config[procs->count - 1];
+                    t_config* cfg = &para->config[para->count - 1];
 
                     if (!parser_env(&parser, &event, cfg)) {
                         free_var_yaml(&val, &last_key);
@@ -147,7 +147,7 @@ bool    parser_file_yaml(char *file, t_process_para* procs) {
     yaml_parser_delete(&parser);
     fclose(fd);
 
-    if (!parser_option_config_requis(procs))
+    if (!parser_option_config_requis(para))
         return false ;
 
     return true ;

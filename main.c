@@ -1,4 +1,6 @@
-#include "parser.h"
+#include "supervisor.h"
+
+int g_processCount = 0;
 
 // fct de test pour printf config 
 const char*     printf_var(t_StateRestart res) {
@@ -30,23 +32,24 @@ const char*     get_signal_name(int val) {
 
 int main(int argc, char **argv) {
 
+    // PARSING PART + INIT PARA
     if (!parser_name_file(argv, argc))
         return 1;
 
-    t_process_para* procs = NULL;
-    procs = malloc(sizeof(t_process_para) * 1);
-    if (!procs) {
+    t_process_para* para = NULL;
+    para = malloc(sizeof(t_process_para) * 1);
+    if (!para) {
         printf("Error malloc\n");
         return 1;
     }
-    if (!parser_file_yaml(argv[1], procs)) {
-        free_process_para(procs);
+    if (!parser_file_yaml(argv[1], para)) {
+        free_process_para(para);
         return 1;
     }
 
-    // PRINT TEST CONFIG //
-    for (unsigned int i = 0; i < procs->count; i++) {
-        t_config*   conf = &procs->config[i];
+    // PRINT TEST CONFIG /////////////////////////////////
+    for (unsigned int i = 0; i < para->count; i++) {
+        t_config*   conf = &para->config[i];
         printf("\nProgram Name : %s\n cmd : %s\n", conf->name, conf->cmd);
         printf("numprocs : %d\numask : %d\n", conf->numProcs, conf->umask);
         printf("workingdir : %s\nautostart : %d\n", conf->workingDir, conf->autoStart);
@@ -63,11 +66,28 @@ int main(int argc, char **argv) {
         t_env_p*    tmp = conf->env;
         for (unsigned int h = 0; h < conf->count_env; h++)
             printf("\tkey : %s\n\tvalue : %s\n", tmp[h].key, tmp[h].value);
-
     }
+    ///////////////////////////////////////////////////////
 
 
-    free_process_para(procs);
+    // START SUPERVISOR INIT
+    t_superMap*     superMap = NULL;
+    superMap = malloc(sizeof(t_superMap) * 1);
+    if (!superMap) {
+        free_process_para(para);
+        return 1;
+    }
+    if (!init_supervisor_processMap(para, &superMap)) {
+        free_process_para(para);
+        free_supervisor(&superMap);
+        return 1 ;
+    }
+    
+    printf_processus(&superMap);
+
+
+    free_supervisor(&superMap);
+    free_process_para(para);
 
     return 0;
 }

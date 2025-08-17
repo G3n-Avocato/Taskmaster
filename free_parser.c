@@ -25,15 +25,15 @@ void    free_config(t_config *cfg) {
         free(cfg->env);
 }
 
-void    free_process_para(t_process_para* procs) {
-    if (procs && procs->config) {
-        for (size_t i = 0; i < procs->count; i++)
-            free_config(&procs->config[i]);
+void    free_process_para(t_process_para* para) {
+    if (para && para->config) {
+        for (size_t i = 0; i < para->count; i++)
+            free_config(&para->config[i]);
     }
-    if (procs && procs->config)
-        free(procs->config);
-    if (procs)
-        free(procs);
+    if (para && para->config)
+        free(para->config);
+    if (para)
+        free(para);
 }
 
 void    free_var_yaml(char **val, char **last_key) {

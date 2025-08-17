@@ -11,6 +11,7 @@
 #include <limits.h>
 #include <signal.h>
 
+// STRUCT MAIN CONFIG FILE OPTIONS 
 typedef enum Restart_State {
     TRUE,
     FALSE,
@@ -52,7 +53,7 @@ typedef struct s_process_para {
     unsigned int    count;
 } t_process_para;
 
-// YAML LIB
+// STATE for pos in YAML file config
 typedef enum parsing_state {
     ST_INIT,
     ST_IN_PROGRAMS,
@@ -60,6 +61,7 @@ typedef enum parsing_state {
     ST_KEY
 } t_ParsingState;
 
+// STRUCT const SIGNAL 
 typedef struct s_signal_entry {
     const char *name;
     int         value;
@@ -86,13 +88,13 @@ static const size_t signal_map_size = sizeof(signalMap) / sizeof(signalMap[0]);
 
 // parser.c //
 bool    parser_name_file(char **argv, int argc);
-bool    parser_file_yaml(char *file, t_process_para* procs);
+bool    parser_file_yaml(char *file, t_process_para* para);
 bool    int_parser(char* str, int *out);
 bool    bool_parser(char *str, bool* out);
 bool    syntax_error_file_config(yaml_parser_t* parser, yaml_event_t* event, FILE* fd);
 
 // parser_config.c //
-bool    parsing_name(t_process_para* procs, char* val);
+bool    parsing_name(t_process_para* para, char* val);
 bool    parser_list_options_config(char *last_key, char *val, t_config* cfg);
 bool    parser_numprocs(char *val, t_config* cfg);
 bool    parser_umask(char *val, t_config* cfg);
@@ -104,11 +106,11 @@ bool    parser_stopsignal(char *val, t_config* cfg);
 bool    parser_stoptime(char *val, t_config *cfg);
 bool    parser_env(yaml_parser_t* parser, yaml_event_t* event, t_config* cfg);
 bool    parser_exitcodes(yaml_parser_t* parser, yaml_event_t* event, t_config* cfg);
-bool    parser_option_config_requis(t_process_para* procs);
+bool    parser_option_config_requis(t_process_para* para);
 
 
 // free_parser.c //
-void    free_process_para(t_process_para* procs);
+void    free_process_para(t_process_para* para);
 void    free_config(t_config *cfg);
 void    free_var_yaml(char **val, char **last_key);
 void    free_lib_yaml(yaml_parser_t* parser, yaml_event_t* event, FILE* fd);

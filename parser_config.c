@@ -1,33 +1,35 @@
 # include "parser.h"
 
-bool    parsing_name(t_process_para* procs, char* val) {
+bool    parsing_name(t_process_para* para, char* val) {
 
     t_config current = {0};
 
-    procs->count++;
-    procs->config = realloc(procs->config, sizeof(t_config) * procs->count);
-    if (!procs->config)
+    para->count++;
+    para->config = realloc(para->config, sizeof(t_config) * para->count);
+    if (!para->config)
         return false ;
 
     current = (t_config){0};
-    procs->config[procs->count - 1] = current;
-    procs->config[procs->count - 1].name = strdup(val);
-    if (!procs->config[procs->count - 1].name)
+    para->config[para->count - 1] = current;
+    para->config[para->count - 1].name = strdup(val);
+    if (!para->config[para->count - 1].name)
         return false ;
-    procs->config[procs->count - 1].has_cmd = false;
-    procs->config[procs->count - 1].numProcs = 1;
-    procs->config[procs->count - 1].umask = 022;
-    procs->config[procs->count - 1].workingDir = strdup("/");
-    if (!procs->config[procs->count - 1].workingDir)
+    para->config[para->count - 1].has_cmd = false;
+    para->config[para->count - 1].numProcs = 1;
+    para->config[para->count - 1].umask = 022;
+    para->config[para->count - 1].workingDir = strdup("/");
+    if (!para->config[para->count - 1].workingDir)
         return false ;
-    procs->config[procs->count - 1].autoStart = true ;
-    procs->config[procs->count - 1].autoRestart = UNEXPECTED;
-    parser_exitcodes_no_sequence("0", &procs->config[procs->count - 1]);
-    procs->config[procs->count - 1].startRetries = 3;
-    procs->config[procs->count - 1].startTime = 1;
-    parser_stopsignal("TERM", &procs->config[procs->count - 1]);
-    procs->config[procs->count - 1].stopTime = 10;
-
+    para->config[para->count - 1].autoStart = true ;
+    para->config[para->count - 1].autoRestart = UNEXPECTED;
+    parser_exitcodes_no_sequence("0", &para->config[para->count - 1]);
+    para->config[para->count - 1].startRetries = 3;
+    para->config[para->count - 1].startTime = 1;
+    parser_stopsignal("TERM", &para->config[para->count - 1]);
+    para->config[para->count - 1].stopTime = 10;
+    para->config[para->count - 1].stdout = NULL;
+    para->config[para->count - 1].stderr = NULL;
+    
     return true ;
 }
 
@@ -307,10 +309,10 @@ bool    parser_exitcodes(yaml_parser_t* parser, yaml_event_t* event, t_config* c
     return true ;
 }
 
-bool    parser_option_config_requis(t_process_para* procs) {
+bool    parser_option_config_requis(t_process_para* para) {
 
-    for (unsigned int i = 0; i < procs->count; i++) {
-        t_config*   conf = &procs->config[i];
+    for (unsigned int i = 0; i < para->count; i++) {
+        t_config*   conf = &para->config[i];
         if (!conf->cmd) {
             printf("Error config file : Required Paramater 'cmd'\n");
             return false ;
