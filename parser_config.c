@@ -15,6 +15,19 @@ bool    parsing_name(t_process_para* procs, char* val) {
     if (!procs->config[procs->count - 1].name)
         return false ;
     procs->config[procs->count - 1].has_cmd = false;
+    procs->config[procs->count - 1].numProcs = 1;
+    procs->config[procs->count - 1].umask = 022;
+    procs->config[procs->count - 1].workingDir = strdup("/");
+    if (!procs->config[procs->count - 1].workingDir)
+        return false ;
+    procs->config[procs->count - 1].autoStart = true ;
+    procs->config[procs->count - 1].autoRestart = UNEXPECTED;
+    parser_exitcodes_no_sequence("0", &procs->config[procs->count - 1]);
+    procs->config[procs->count - 1].startRetries = 3;
+    procs->config[procs->count - 1].startTime = 1;
+    parser_stopsignal("TERM", &procs->config[procs->count - 1]);
+    procs->config[procs->count - 1].stopTime = 10;
+
     return true ;
 }
 
@@ -31,6 +44,7 @@ bool    parser_list_options_config(char *last_key, char *val, t_config* cfg) {
     else if (!strcmp(last_key, "umask"))
         return (parser_umask(val, cfg));
     else if (!strcmp(last_key, "workingdir")) {
+        free(cfg->workingDir);
         cfg->workingDir = strdup(val);
         if (!cfg->workingDir)
             return false ;
@@ -46,7 +60,7 @@ bool    parser_list_options_config(char *last_key, char *val, t_config* cfg) {
     else if (!strcmp(last_key, "startretries"))
         return (parser_startretries(val, cfg));
     else if (!strcmp(last_key, "exitcodes"))
-        return (parser_exitcodes_no_sequence(val, last_key, cfg));
+        return (parser_exitcodes_no_sequence(val, cfg));
     else if (!strcmp(last_key, "starttime"))
         return (parser_starttime(val, cfg));
     else if (!strcmp(last_key, "stopsignal"))
@@ -84,7 +98,7 @@ bool    parser_umask(char *val, t_config* cfg) {
     
     if (!int_parser(val, &cfg->umask)) {
         printf("Error config file : Bad Paramater 'umask'\n");
-        return false ; // free ce qu'il y a free
+        return false ;
     }
     if (cfg->umask < 0 || cfg->umask > 511) {
         printf("Error config file : Bad Paramater 'umask'\n");
@@ -128,8 +142,9 @@ bool    parser_startretries(char *val, t_config* cfg) {
     return true ;
 }
 
-bool    parser_exitcodes_no_sequence(char* val, char* last_key, t_config* cfg) {
-    
+bool    parser_exitcodes_no_sequence(char* val, t_config* cfg) {
+    free(cfg->exitCodes.codes);
+
     int code;
     if (!int_parser(val, &code)) {
         printf("Error config file : Bad Paramater 'exitcodes'\n");
@@ -196,8 +211,8 @@ bool    parser_env(yaml_parser_t* parser, yaml_event_t* event, t_config* cfg) {
         return false;
     }
 
-    t_env_p* envs = NULL;
-    unsigned int count = 0;
+    t_env_p*        envs = NULL;
+    unsigned int    count = 0;
 
     while (1) {
         yaml_parser_parse(parser, event);
@@ -249,8 +264,6 @@ bool    parser_env(yaml_parser_t* parser, yaml_event_t* event, t_config* cfg) {
     return true ; 
 }
 
-
-//revoir cette focntion et erreur 
 bool    parser_exitcodes(yaml_parser_t* parser, yaml_event_t* event, t_config* cfg) {
     if (event->type != YAML_SEQUENCE_START_EVENT) {
         fprintf(stderr, "Error config file : Expected a sequence for 'exitcodes'\n");
@@ -259,6 +272,7 @@ bool    parser_exitcodes(yaml_parser_t* parser, yaml_event_t* event, t_config* c
 
     int*    codes = NULL;
     size_t  code_count = 0;
+    free(cfg->exitCodes.codes);
 
     while (1) {
         yaml_parser_parse(parser, event);
@@ -290,5 +304,17 @@ bool    parser_exitcodes(yaml_parser_t* parser, yaml_event_t* event, t_config* c
     cfg->exitCodes.codes = codes;
     cfg->exitCodes.count = code_count;
     
+    return true ;
+}
+
+bool    parser_option_config_requis(t_process_para* procs) {
+
+    for (unsigned int i = 0; i < procs->count; i++) {
+        t_config*   conf = &procs->config[i];
+        if (!conf->cmd) {
+            printf("Error config file : Required Paramater 'cmd'\n");
+            return false ;
+        }
+    }
     return true ;
 }

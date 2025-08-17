@@ -3,12 +3,29 @@
 bool    parser_name_file(char **argv, int argc) {
     const char* tmp = strrchr(argv[1], '.');
 
-    if (argc != 2 || !tmp)
+    if (argc != 2 || !tmp) {
+        fprintf(stderr, "Wrong config file\n");
         return false ;
+    }
 
-    if (strcmp(tmp, ".yaml") == 0 || strcmp(tmp, ".yml") == 0)
-        return true ;
-    return false ;
+    if (strcmp(tmp, ".yaml") != 0) {
+        if (strcmp(tmp, ".yml") != 0) {
+            printf ("strcmp = %d\n", strcmp(tmp, ".yaml"));
+            fprintf(stderr, "Wrong type config file\n");
+            return false ;
+        }
+    }
+
+    if (access(argv[1], F_OK) == -1) {
+        fprintf(stderr, "Config file does not exist\n");
+        return false ;
+    }
+    if (access(argv[1], R_OK) == -1) {
+        fprintf(stderr, "Config file not accessible\n");
+        return false ;
+    }
+
+    return true ;
 }
 
 bool    parser_file_yaml(char *file, t_process_para* procs) {
@@ -21,19 +38,21 @@ bool    parser_file_yaml(char *file, t_process_para* procs) {
 
     yaml_parser_t   parser;
     yaml_event_t    event;
+    t_ParsingState  state = ST_INIT;
+    char*           last_key = NULL;
+    bool            done = false;
 
     yaml_parser_initialize(&parser);
     yaml_parser_set_input_file(&parser, fd);
-
-    enum parsing_state state = ST_INIT;
-    char*   last_key = NULL;
-
     procs->config = NULL;
     procs->count = 0;
 
-    bool done = false;
-
-    while (!done && yaml_parser_parse(&parser, &event)) {
+    while (!done) {
+        if (!syntax_error_file_config(&parser, &event, fd)) {
+            if (last_key)
+                free(last_key);
+            return false ;
+        }
         switch (event.type) {
             case YAML_SCALAR_EVENT:
 
@@ -47,7 +66,7 @@ bool    parser_file_yaml(char *file, t_process_para* procs) {
                     if (!strcmp(val, "programs"))
                         state = ST_IN_PROGRAMS;
                     else {
-                        fprintf(stderr, "Expected 'programs' key\n");
+                        fprintf(stderr, "Error config file : Expected 'programs' key\n");
                         free(val);
                         free_lib_yaml(&parser, &event, fd);
                         return false ;
@@ -128,11 +147,21 @@ bool    parser_file_yaml(char *file, t_process_para* procs) {
     yaml_parser_delete(&parser);
     fclose(fd);
 
-    // fonction qui verifie pour chaque struct que cmd est present 
+    if (!parser_option_config_requis(procs))
+        return false ;
 
     return true ;
 }
 
+bool    syntax_error_file_config(yaml_parser_t* parser, yaml_event_t* event, FILE* fd) {
+
+    if (!yaml_parser_parse(parser, event)) {
+        fprintf(stderr, "Error config file : %s at %lu, column %lu\n", parser->problem, parser->problem_mark.line + 1, parser->problem_mark.column + 1);
+        free_lib_yaml(parser, event, fd);
+        return false ;
+    }
+    return true ;
+}
 
 bool     int_parser(char* val, int *out) {
     char *end;

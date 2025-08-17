@@ -7,10 +7,6 @@ void    free_config(t_config *cfg) {
         free(cfg->cmd);
     if (cfg->workingDir)
         free(cfg->workingDir);
-    //if (cfg->autoRestart)
-    //    free(cfg->autoRestart);
-    //if (cfg->stopSignal)
-    //    free(cfg->stopSignal);
     if (cfg->stdout)
         free(cfg->stdout);
     if (cfg->stderr)
@@ -30,10 +26,11 @@ void    free_config(t_config *cfg) {
 }
 
 void    free_process_para(t_process_para* procs) {
-    for (size_t i = 0; i < procs->count; i++)
-        free_config(&procs->config[i]);
-    
-    if (procs->config)
+    if (procs && procs->config) {
+        for (size_t i = 0; i < procs->count; i++)
+            free_config(&procs->config[i]);
+    }
+    if (procs && procs->config)
         free(procs->config);
     if (procs)
         free(procs);

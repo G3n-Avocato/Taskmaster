@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <yaml.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -35,12 +36,10 @@ typedef struct s_config {
     char*                               workingDir;
     bool                                autoStart;
     t_StateRestart                      autoRestart;
-    //char*                               autoRestart;
     struct exitcodes                    exitCodes;
     int                                 startRetries;
     int                                 startTime;
     int                                 stopSignal;
-    //char*                               stopSignal;
     int                                 stopTime;
     char*                               stdout;
     char*                               stderr;
@@ -54,12 +53,12 @@ typedef struct s_process_para {
 } t_process_para;
 
 // YAML LIB
-enum parsing_state {
+typedef enum parsing_state {
     ST_INIT,
     ST_IN_PROGRAMS,
     ST_IN_CONFIG,
     ST_KEY
-};
+} t_ParsingState;
 
 typedef struct s_signal_entry {
     const char *name;
@@ -90,6 +89,7 @@ bool    parser_name_file(char **argv, int argc);
 bool    parser_file_yaml(char *file, t_process_para* procs);
 bool    int_parser(char* str, int *out);
 bool    bool_parser(char *str, bool* out);
+bool    syntax_error_file_config(yaml_parser_t* parser, yaml_event_t* event, FILE* fd);
 
 // parser_config.c //
 bool    parsing_name(t_process_para* procs, char* val);
@@ -98,12 +98,14 @@ bool    parser_numprocs(char *val, t_config* cfg);
 bool    parser_umask(char *val, t_config* cfg);
 bool    parser_autorestart(char *val, t_config* cfg);
 bool    parser_startretries(char *val, t_config* cfg);
-bool    parser_exitcodes_no_sequence(char* val, char* last_key, t_config* cfg);
+bool    parser_exitcodes_no_sequence(char* val, t_config* cfg);
 bool    parser_starttime(char *val, t_config *cfg);
 bool    parser_stopsignal(char *val, t_config* cfg);
 bool    parser_stoptime(char *val, t_config *cfg);
 bool    parser_env(yaml_parser_t* parser, yaml_event_t* event, t_config* cfg);
 bool    parser_exitcodes(yaml_parser_t* parser, yaml_event_t* event, t_config* cfg);
+bool    parser_option_config_requis(t_process_para* procs);
+
 
 // free_parser.c //
 void    free_process_para(t_process_para* procs);
