@@ -29,7 +29,7 @@ bool    parsing_name(t_process_para* para, char* val) {
     para->config[para->count - 1].stopTime = 10;
     para->config[para->count - 1].stdout = NULL;
     para->config[para->count - 1].stderr = NULL;
-    
+    para->config[para->count - 1].env = NULL;
     return true ;
 }
 

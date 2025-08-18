@@ -30,6 +30,20 @@ const char*     get_signal_name(int val) {
     return "UNKNOWN";
 }
 
+const char* enumtoString(ProcessStatus stat) {
+    switch (stat) {
+        case STOPPED: return "STOPPED";
+        case STARTING: return "STARTING";
+        case RUNNING: return "RUNNING";
+        case BACKOFF: return "BACKOFF";
+        case STOPPING: return "STOPPING";
+        case EXITED: return "EXITED";
+        case FATAL: return "FATAL";
+        case UNKNOWN: return "UNKNOWN";
+        default: return "default";
+    }
+}
+
 int main(int argc, char **argv) {
 
     // PARSING PART + INIT PARA
@@ -46,8 +60,9 @@ int main(int argc, char **argv) {
         free_process_para(para);
         return 1;
     }
+    /////////////////////////////
 
-    // PRINT TEST CONFIG /////////////////////////////////
+    // A enlever PRINT TEST CONFIG /////////////////////////////////
     for (unsigned int i = 0; i < para->count; i++) {
         t_config*   conf = &para->config[i];
         printf("\nProgram Name : %s\n cmd : %s\n", conf->name, conf->cmd);
@@ -82,9 +97,21 @@ int main(int argc, char **argv) {
         free_supervisor(&superMap);
         return 1 ;
     }
-    
-    printf_processus(&superMap);
 
+    //printf_processus(&superMap);
+    //////////////////////////
+
+    // START SUPERVISOR BOOT
+    if (!autostart_boot(&superMap, para)) {
+        free_process_para(para);
+        free_supervisor(&superMap);
+        return 1 ;
+    }
+    if (!waitpid_loop(&superMap)) {
+        free_process_para(para);
+        free_supervisor(&superMap);
+        return 1 ;
+    }
 
     free_supervisor(&superMap);
     free_process_para(para);

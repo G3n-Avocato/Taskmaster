@@ -3,6 +3,13 @@
 
 # include "parser.h"
 
+#include <ctype.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <time.h>
+
 typedef enum ProcessStatus {
     STOPPED,
     STARTING,
@@ -35,11 +42,26 @@ typedef struct s_processus {
     int             count_retries;
 } t_procs;
 
+typedef struct s_supervisorMap {
+    char*           name;
+    int             id;
+    t_procs         proc;
+} t_superMap;
+
+// process.c
+bool    startProcess(t_procs* proc, t_superMap** superMap, t_process_para* para);
+void    parent_exec_proc(t_procs* proc);
+bool    waitpid_monitoring_status(t_procs* proc);
+void    child_exec_proc(t_procs* proc, t_superMap** superMap, t_process_para* para);
 
 // process_init.c
 bool    init_process_struct(t_procs* proc, t_config* conf, unsigned int j);
 bool    buildStd_process(char* std, char** ptr, t_config* conf, int j);
 bool    build_default_Std_process(char** ptr, t_config *conf, char *end, int j);
+bool    splitWordsArgv(char ***ptr, char *input);
+bool    buildEnvp(char ***ptr, t_config* conf);
+bool    open_file(char* std, int* fd);
+bool    open_file_std(t_execs* exec);
 
 // process_init_utils.c
 char	*ft_itoa(int n);
