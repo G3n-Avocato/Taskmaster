@@ -41,13 +41,127 @@ bool    autostart_boot(t_superMap** superMap, t_process_para* para) {
     return true ;
 }
 
+bool    main_loop(t_superMap** superMap, t_process_para* para) {
+    
+    struct timespec wait_for = {0};
+    wait_for.tv_sec = 0;
+    wait_for.tv_nsec = 100 * 1000000L;
+
+    while (1) {
+
+        if (!waitpid_loop(superMap)) {
+            return false ;        
+        }
+        if (!state_Running(superMap)) {
+            return false ;
+        }
+        if (!startRetries_loop(superMap, para)) {
+            return false ;
+        }
+        if (!autoRestart_loop(superMap, para)) {
+            return false ;
+        }
+
+        if (!test_stopProcess(superMap))
+            return false ;
+
+        nanosleep(&wait_for, NULL);
+    }
+    return true ;
+}
+
 bool    waitpid_loop(t_superMap** superMap) {
     
+    //printf("waitpid_loop :\n");
     for (unsigned int i = 0; i < g_processCount; i++) {
-
+        //printf("%d - %s - %d\n", (*superMap)[i].proc.processus, (*superMap)[i].name, (*superMap)[i].id);
         if (!waitpid_monitoring_status(&(*superMap)[i].proc))
-            return false ;
+            return false ; // a voir pour ca
+        printf("%d - %s - %d -----------> %s\n\n", (*superMap)[i].proc.processus, (*superMap)[i].name, (*superMap)[i].id, enumtoString((*superMap)[i].proc.state));
     }
+    
+    return true ;
+}
+
+bool    state_Running(t_superMap** superMap) {
+    
+    for (unsigned int i = 0; i < g_processCount; i++) {
+        ProcessStatus   p_state = (*superMap)[i].proc.state;
+
+        if (p_state == STARTING && isProcessUp((*superMap)[i].proc.processus)) {
+            time_t  end = time(NULL);
+            double  diff_time = difftime(end, (*superMap)[i].proc.start_run);
+            printf("Running state %s-%d difftime %f\n", (*superMap)[i].name, (*superMap)[i].id, diff_time);
+
+            if (diff_time >= (*superMap)[i].proc.config->startTime) {
+                printf("%f\n", diff_time);
+                (*superMap)[i].proc.state = RUNNING;
+                (*superMap)[i].proc.run_reached = true ;
+            }
+        }
+    }
+    return true ;
+}
+
+bool    test_stopProcess(t_superMap** superMap) {
+    for (unsigned int i = 0; i < g_processCount; i++) {
+        ProcessStatus   p_state = (*superMap)[i].proc.state;
+        if (p_state == RUNNING) {
+            time_t  end = time(NULL);
+            double  diff_time = difftime(end, (*superMap)[i].proc.start_run);
+            printf("stopprocess difftime %f\n", diff_time);
+            if (diff_time > 5) {
+                if (!stopProcess(&(*superMap)[i].proc))
+                    return false ;
+            }
+        }
+    }
+    return true ;
+}
+
+bool    startRetries_loop(t_superMap** superMap, t_process_para *para) {
+
+    for (unsigned int i = 0; i < g_processCount; i++) {
+        if ((*superMap)[i].proc.config->startRetries > 0) {
+            ProcessStatus   p_state = (*superMap)[i].proc.state;
+            
+            if (p_state != RUNNING && !(*superMap)[i].proc.run_reached) {
+                
+                if ((*superMap)[i].proc.config->startRetries > (*superMap)[i].proc.count_retries) {
+                    
+                    if (p_state == EXITED || p_state == BACKOFF) {
+                        
+                        (*superMap)[i].proc.state = BACKOFF;
+                        (*superMap)[i].proc.count_retries++;
+                        if (!startProcess(&(*superMap)[i].proc, superMap, para))
+                            return false ;
+                    }
+                }
+                else
+                    (*superMap)[i].proc.state = FATAL;
+            }
+        }
+    }
+
+    return true ;
+}
+
+bool    autoRestart_loop(t_superMap** superMap, t_process_para *para) {
+
+    for (unsigned int i = 0; i < g_processCount; i++) {
+        ProcessStatus   p_state = (*superMap)[i].proc.state;
+        int             st_restart = (*superMap)[i].proc.config->autoRestart;
+
+        if ((*superMap)[i].proc.run_reached && p_state == EXITED) {
+            if (st_restart == TRUE || (st_restart == UNEXPECTED && !(*superMap)[i].proc.exit_code)) {
+
+                (*superMap)[i].proc.count_restart++;
+                if (!startProcess(&(*superMap)[i].proc, superMap, para))
+                            return false ;
+            }
+        }
+    }
+
     return true ;
 }
 

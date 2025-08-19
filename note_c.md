@@ -5,36 +5,28 @@ Fait et A revoir :
 * tester les sorties d'erreur (voir ce qu'il reste a free)
 
 Fait :
-
-* init struct process :
-* fct argv envp
-* open_file std 
-* fct de fork dans process
-* opt autostart ok
-
-En cours :
-
 * loop supervisor :
-
 * fct waitpid in loop
 * fct de running
 * fct pour startretries
+* fct pour autorestart
+* fct para stop 
+* fct killstop
 
+En cours :
 
 
 A faire : 
 
-* fct pour autorestart
-
-* fct para stop 
-* fct killstop
 
 * Makefile et cmake pour lib yaml 
+
+* logger 
+
+* signal ctrl+c ctrl+/
 
 Ensuite :
 
 * ajouter partie controller
 -> fct de comparaison pour reload le fichier et voir si changement pour relancer ou non 
 -> boucle fct pour trouver les groupname ou des pos id precis
-
-* ajouter partie logger

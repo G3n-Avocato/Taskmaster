@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
         free_supervisor(&superMap);
         return 1 ;
     }
-    if (!waitpid_loop(&superMap)) {
+    if (!main_loop(&superMap, para)) {
         free_process_para(para);
         free_supervisor(&superMap);
         return 1 ;

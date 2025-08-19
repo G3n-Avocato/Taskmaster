@@ -35,13 +35,12 @@ bool    waitpid_monitoring_status(t_procs* proc) {
 
     pid_t   child_pid = waitpid(proc->processus, &status, WNOHANG);
     if (child_pid == -1) {
-        proc->state = UNKNOWN;
+        proc->state = EXITED;
         perror("waitpid");
-        return false ;
     }
     if (child_pid == 0) {
         if (proc->start_run == 0)
-            proc->start_run = time(NULL); 
+            proc->start_run = time(NULL);
     }
     else if (child_pid == proc->processus) {
         if (WIFEXITED(status)) {
@@ -51,10 +50,10 @@ bool    waitpid_monitoring_status(t_procs* proc) {
             }
         }
         proc->state = EXITED;
-        printf("1state waitpid %d = %s\n", proc->id, enumtoString(proc->state));
+        //printf("1state waitpid %d = %s\n", proc->id, enumtoString(proc->state));
     }
 
-    printf("2state waitpid %d = %s\n", proc->id, enumtoString(proc->state));
+   // printf("2state waitpid %d = %s\n", proc->id, enumtoString(proc->state));
     return true ;
 }
 
@@ -85,4 +84,36 @@ void    child_exec_proc(t_procs* proc, t_superMap** superMap, t_process_para* pa
         free_process_para(para);
         _exit(EXIT_FAILURE);
     }
+}
+
+bool    isProcessUp(pid_t processus) {
+    return processus > 0 && kill(processus, 0) == 0;
+}
+
+bool    stopProcess(t_procs* proc) {
+
+    if (kill(proc->processus, proc->config->stopSignal) == -1) {
+        perror("Error kill stop");
+        return false ;
+    }
+    proc->state = STOPPING;
+    sleep(proc->config->stopTime);
+
+    if (isProcessUp(proc->processus)) {
+        if (!killProcess(proc))
+            return false ;
+    }
+
+    proc->state = STOPPED;
+    return true ;
+}
+
+bool    killProcess(t_procs* proc) {
+
+    if (kill(proc->processus, SIGKILL) == -1) {
+            perror("Error SIGKILL");
+            return false ;
+    }
+
+    return true ;
 }

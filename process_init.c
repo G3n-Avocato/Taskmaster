@@ -30,6 +30,8 @@ bool    init_process_struct(t_procs* proc, t_config* conf, unsigned int j) {
     proc->exit_code = false;
     proc->run_reached = false;
     proc->count_retries = 0;
+    proc->start_run = 0;
+    proc->count_restart = 0;
     
     return true ;
 }

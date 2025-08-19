@@ -40,6 +40,8 @@ typedef struct s_processus {
     bool            exit_code;
     bool            run_reached;
     int             count_retries;
+    //time_t          start_restart;
+    int             count_restart;
 } t_procs;
 
 typedef struct s_supervisorMap {
@@ -53,6 +55,9 @@ bool    startProcess(t_procs* proc, t_superMap** superMap, t_process_para* para)
 void    parent_exec_proc(t_procs* proc);
 bool    waitpid_monitoring_status(t_procs* proc);
 void    child_exec_proc(t_procs* proc, t_superMap** superMap, t_process_para* para);
+bool    isProcessUp(pid_t processus);
+bool    stopProcess(t_procs* proc);
+bool    killProcess(t_procs* proc);
 
 // process_init.c
 bool    init_process_struct(t_procs* proc, t_config* conf, unsigned int j);
