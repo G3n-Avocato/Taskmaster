@@ -13,13 +13,13 @@ Fait :
 * fct para stop 
 * fct killstop
 
+
+* Makefile et cmake pour lib yaml 
+
 En cours :
 
 
 A faire : 
-
-
-* Makefile et cmake pour lib yaml 
 
 * logger 
 

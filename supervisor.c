@@ -7,7 +7,7 @@ bool    init_supervisor_processMap(t_process_para* para, t_superMap** superMap) 
 
     for (unsigned int i = 0; i < para->count; i++) {
         t_config*   conf = &para->config[i];
-        for (unsigned int j = 0; j < conf->numProcs; j++) {
+        for (int j = 0; j < conf->numProcs; j++) {
             g_processCount++;
             
             tmp = realloc(*superMap, sizeof(t_superMap) * g_processCount);
@@ -31,7 +31,7 @@ bool    init_supervisor_processMap(t_process_para* para, t_superMap** superMap) 
 
 bool    autostart_boot(t_superMap** superMap, t_process_para* para) {
 
-    for (unsigned int i = 0; i < g_processCount; i++) {
+    for (int i = 0; i < g_processCount; i++) {
         
         if ((*superMap)[i].proc.config->autoStart) {
             if (!startProcess(&(*superMap)[i].proc, superMap, para))
@@ -73,7 +73,7 @@ bool    main_loop(t_superMap** superMap, t_process_para* para) {
 bool    waitpid_loop(t_superMap** superMap) {
     
     //printf("waitpid_loop :\n");
-    for (unsigned int i = 0; i < g_processCount; i++) {
+    for (int i = 0; i < g_processCount; i++) {
         //printf("%d - %s - %d\n", (*superMap)[i].proc.processus, (*superMap)[i].name, (*superMap)[i].id);
         if (!waitpid_monitoring_status(&(*superMap)[i].proc))
             return false ; // a voir pour ca
@@ -85,7 +85,7 @@ bool    waitpid_loop(t_superMap** superMap) {
 
 bool    state_Running(t_superMap** superMap) {
     
-    for (unsigned int i = 0; i < g_processCount; i++) {
+    for (int i = 0; i < g_processCount; i++) {
         ProcessStatus   p_state = (*superMap)[i].proc.state;
 
         if (p_state == STARTING && isProcessUp((*superMap)[i].proc.processus)) {
@@ -104,7 +104,7 @@ bool    state_Running(t_superMap** superMap) {
 }
 
 bool    test_stopProcess(t_superMap** superMap) {
-    for (unsigned int i = 0; i < g_processCount; i++) {
+    for (int i = 0; i < g_processCount; i++) {
         ProcessStatus   p_state = (*superMap)[i].proc.state;
         if (p_state == RUNNING) {
             time_t  end = time(NULL);
@@ -121,7 +121,7 @@ bool    test_stopProcess(t_superMap** superMap) {
 
 bool    startRetries_loop(t_superMap** superMap, t_process_para *para) {
 
-    for (unsigned int i = 0; i < g_processCount; i++) {
+    for (int i = 0; i < g_processCount; i++) {
         if ((*superMap)[i].proc.config->startRetries > 0) {
             ProcessStatus   p_state = (*superMap)[i].proc.state;
             
@@ -148,7 +148,7 @@ bool    startRetries_loop(t_superMap** superMap, t_process_para *para) {
 
 bool    autoRestart_loop(t_superMap** superMap, t_process_para *para) {
 
-    for (unsigned int i = 0; i < g_processCount; i++) {
+    for (int i = 0; i < g_processCount; i++) {
         ProcessStatus   p_state = (*superMap)[i].proc.state;
         int             st_restart = (*superMap)[i].proc.config->autoRestart;
 
@@ -167,7 +167,7 @@ bool    autoRestart_loop(t_superMap** superMap, t_process_para *para) {
 
 void    printf_processus(t_superMap** super) {
 
-    for (unsigned int i = 0; i < g_processCount; i++) {
+    for (int i = 0; i < g_processCount; i++) {
         printf("init name procs -> %s + %d\n", (*super)[i].name, (*super)[i].id);
         printf("proc->exec->stdout : %s\n", (*super)[i].proc.exec->stdout);
         printf("proc->exec->stderr : %s\n", (*super)[i].proc.exec->stderr);

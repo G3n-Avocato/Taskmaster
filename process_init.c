@@ -174,12 +174,12 @@ bool    buildEnvp(char ***ptr, t_config* conf) {
         if (!tmp)
             return false;
 
-            memcpy(tmp, loop[i].key, key_len);
-            tmp[key_len] = '=';
-            memcpy(tmp + key_len + 1, loop[i].value, val_len);
-            tmp[key_len + 1 + val_len] = '\0';
+        memcpy(tmp, loop[i].key, key_len);
+        tmp[key_len] = '=';
+        memcpy(tmp + key_len + 1, loop[i].value, val_len);
+        tmp[key_len + 1 + val_len] = '\0';
 
-            (*ptr)[i] = tmp;
+        (*ptr)[i] = tmp;
     }
     (*ptr)[conf->count_env] = NULL;
     
