@@ -1,4 +1,4 @@
-# include "parser.h"
+# include "supervisor.h"
 
 bool    parsing_name(t_process_para* para, char* val) {
 
@@ -6,20 +6,26 @@ bool    parsing_name(t_process_para* para, char* val) {
 
     para->count++;
     para->config = realloc(para->config, sizeof(t_config) * para->count);
-    if (!para->config)
+    if (!para->config) {
+        logger(CRIT, "Error parser config : allocation error (realloc)");
         return false ;
+    }
 
     current = (t_config){0};
     para->config[para->count - 1] = current;
     para->config[para->count - 1].name = strdup(val);
-    if (!para->config[para->count - 1].name)
+    if (!para->config[para->count - 1].name) {
+        logger(CRIT, "Error parser config : allocation error (strdup)");
         return false ;
+    }
     para->config[para->count - 1].has_cmd = false;
     para->config[para->count - 1].numProcs = 1;
     para->config[para->count - 1].umask = 022;
     para->config[para->count - 1].workingDir = strdup("/");
-    if (!para->config[para->count - 1].workingDir)
+    if (!para->config[para->count - 1].workingDir)  {
+        logger(CRIT, "Error parser config : allocation error (strdup)");
         return false ;
+    }
     para->config[para->count - 1].autoStart = true ;
     para->config[para->count - 1].autoRestart = UNEXPECTED;
     parser_exitcodes_no_sequence("0", &para->config[para->count - 1]);
@@ -37,8 +43,10 @@ bool    parser_list_options_config(char *last_key, char *val, t_config* cfg) {
 
     if (!strcmp(last_key, "cmd")) {
         cfg->cmd = strdup(val);
-        if (!cfg->cmd)
+        if (!cfg->cmd) {
+            logger(CRIT, "Error parser config : allocation error (strdup)");
             return false ;
+        }
         cfg->has_cmd = true;
     }
     else if (!strcmp(last_key, "numprocs"))
@@ -48,12 +56,14 @@ bool    parser_list_options_config(char *last_key, char *val, t_config* cfg) {
     else if (!strcmp(last_key, "workingdir")) {
         free(cfg->workingDir);
         cfg->workingDir = strdup(val);
-        if (!cfg->workingDir)
+        if (!cfg->workingDir) {
+            logger(CRIT, "Error parser config : allocation error (strdup)");
             return false ;
+        }
     }
     else if (!strcmp(last_key, "autostart")) {
         if (!bool_parser(val, &cfg->autoStart)) {
-            printf("Error config file : Bad Paramater 'autostart'\n");
+            logger(DEBG, "Error config file : Bad Paramater 'autostart'");
             return false ;
         }
     }
@@ -71,18 +81,22 @@ bool    parser_list_options_config(char *last_key, char *val, t_config* cfg) {
         return (parser_stoptime(val, cfg));
     else if (!strcmp(last_key, "stdout")) {
         cfg->stdout = strdup(val);
-        if (!cfg->stdout)
+        if (!cfg->stdout)  {
+            logger(CRIT, "Error parser config : allocation error (strdup)");
             return false ;
+        }
     }
     else if (!strcmp(last_key, "stderr")) {
         cfg->stderr = strdup(val);
-        if (!cfg->stderr)
+        if (!cfg->stderr)  {
+            logger(CRIT, "Error parser config : allocation error (strdup)");
             return false ;
+        }
     }
 
     return true ;
 }
-
+//------------------------------------------------------> ici logger
 bool    parser_numprocs(char *val, t_config* cfg) {
     
     if (!int_parser(val, &cfg->numProcs)) {

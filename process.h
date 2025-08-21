@@ -1,14 +1,13 @@
 #ifndef PROCESS_H
 # define PROCESS_H
 
-# include "parser.h"
-
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <time.h>
+#include <sys/time.h>
 
 typedef enum ProcessStatus {
     STOPPED,

@@ -1,6 +1,7 @@
 #include "supervisor.h"
 
 int g_processCount = 0;
+FILE* g_fdlog;
 
 // fct de test pour printf config 
 const char*     printf_var(t_StateRestart res) {
@@ -45,6 +46,9 @@ const char* enumtoString(ProcessStatus stat) {
 }
 
 int main(int argc, char **argv) {
+
+    if (!open_logger_file("/tmp/Supervisor.log"))
+        return 1 ;
 
     // PARSING PART + INIT PARA
     if (!parser_name_file(argv, argc))

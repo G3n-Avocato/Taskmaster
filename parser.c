@@ -1,27 +1,26 @@
-# include "parser.h"
+# include "supervisor.h"
 
 bool    parser_name_file(char **argv, int argc) {
     const char* tmp = strrchr(argv[1], '.');
 
     if (argc != 2 || !tmp) {
-        fprintf(stderr, "Wrong config file\n");
+        logger(DEBG, "Wrong config file");
         return false ;
     }
 
     if (strcmp(tmp, ".yaml") != 0) {
         if (strcmp(tmp, ".yml") != 0) {
-            printf ("strcmp = %d\n", strcmp(tmp, ".yaml"));
-            fprintf(stderr, "Wrong type config file\n");
+            logger(DEBG, "Wrong type for config file");
             return false ;
         }
     }
 
     if (access(argv[1], F_OK) == -1) {
-        fprintf(stderr, "Config file does not exist\n");
+        logger(DEBG, "Config file does not exist");
         return false ;
     }
     if (access(argv[1], R_OK) == -1) {
-        fprintf(stderr, "Config file not accessible\n");
+        logger(DEBG, "Config file not accessible");
         return false ;
     }
 
@@ -32,7 +31,7 @@ bool    parser_file_yaml(char *file, t_process_para* para) {
 
     FILE*   fd = fopen(file, "r");
     if (!fd) {
-        perror("fopen");
+        logger(CRIT, strerror(errno));
         return false ;
     }
 
@@ -66,7 +65,7 @@ bool    parser_file_yaml(char *file, t_process_para* para) {
                     if (!strcmp(val, "programs"))
                         state = ST_IN_PROGRAMS;
                     else {
-                        fprintf(stderr, "Error config file : Expected 'programs' key\n");
+                        logger(DEBG, "Error config file : Expected 'programs' key");
                         free(val);
                         free_lib_yaml(&parser, &event, fd);
                         return false ;
@@ -156,7 +155,9 @@ bool    parser_file_yaml(char *file, t_process_para* para) {
 bool    syntax_error_file_config(yaml_parser_t* parser, yaml_event_t* event, FILE* fd) {
 
     if (!yaml_parser_parse(parser, event)) {
-        fprintf(stderr, "Error config file : %s at %lu, column %lu\n", parser->problem, parser->problem_mark.line + 1, parser->problem_mark.column + 1);
+        char    buffer[30];
+        snprintf(buffer, sizeof(buffer), "Error config file : %s at %lu, column %lu\n", parser->problem, parser->problem_mark.line + 1, parser->problem_mark.column + 1);
+        logger(DEBG, buffer);
         free_lib_yaml(parser, event, fd);
         return false ;
     }

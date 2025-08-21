@@ -1,8 +1,9 @@
 #ifndef SUPERVISOR_H
 # define SUPERVISOR_H
 
+#include "parser.h"
 #include "process.h"
-
+#include "logger.h"
 
 extern int g_processCount;
 
