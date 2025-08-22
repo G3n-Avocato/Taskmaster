@@ -20,7 +20,25 @@ typedef enum Log_Level {
 bool    open_logger_file(const char* str);
 bool    timestamp_logger();
 bool    loglevel_logger(LogLevel nvl);
-bool    message_logger(char *msg);
+bool    message_logger(char *msg, FILE* fd);
 bool    logger(LogLevel nvl, char* msg);
+
+bool    start_supervisor_logger();
+bool    end_supervisor_logger();
+bool    ctrl_supervisor_logger();
+
+bool    start_process_logger(char *name, int id, pid_t pid);
+bool    running_process_logger(char *name, int id, int t);
+const char*    signal_int_tostring(int sign);
+bool    stopped_process_signal_logger(char *name, int id, int sign);
+bool    wait_stop_process_logger(char *name, int id);
+bool    exit_expected_process_logger(char *name, int id, int exit);
+bool    exit_not_expected_process_logger(char *name, int id, int exit);
+bool    config_change_logger(char *name);
+bool    updating_process_logger(char *name);
+bool    fatal_state_logger(char *name, int id);
+bool    error_sigkill_logger(char *name, int id, int pid, char* msg);
+bool    error_kill_logger(char *name, int id, int pid, int sign, char* msg);
+bool    error_fork_logger(char *cmd, char *msg);
 
 #endif

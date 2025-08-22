@@ -11,8 +11,10 @@ bool    init_supervisor_processMap(t_process_para* para, t_superMap** superMap) 
             g_processCount++;
             
             tmp = realloc(*superMap, sizeof(t_superMap) * g_processCount);
-            if (!tmp)
+            if (!tmp) {
+                logger(CRIT, "Error init : allocation error (realloc)");
                 return false ;
+            }
             *superMap = tmp;
 
             current = (t_procs){0};
@@ -20,7 +22,7 @@ bool    init_supervisor_processMap(t_process_para* para, t_superMap** superMap) 
             (*superMap)[g_processCount - 1].id = j + 1;
             (*superMap)[g_processCount - 1].name = conf->name;
             if (!init_process_struct(&(*superMap)[g_processCount - 1].proc, conf, j)) {
-                fprintf(stderr, "Error init process\n");
+                logger(CRIT, "Error init : process map");
                 return false ;
             }
         } 
@@ -72,9 +74,7 @@ bool    main_loop(t_superMap** superMap, t_process_para* para) {
 
 bool    waitpid_loop(t_superMap** superMap) {
     
-    //printf("waitpid_loop :\n");
     for (int i = 0; i < g_processCount; i++) {
-        //printf("%d - %s - %d\n", (*superMap)[i].proc.processus, (*superMap)[i].name, (*superMap)[i].id);
         if (!waitpid_monitoring_status(&(*superMap)[i].proc))
             return false ; // a voir pour ca
         printf("%d - %s - %d -----------> %s\n\n", (*superMap)[i].proc.processus, (*superMap)[i].name, (*superMap)[i].id, enumtoString((*superMap)[i].proc.state));

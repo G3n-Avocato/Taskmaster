@@ -7,7 +7,7 @@ bool    parsing_name(t_process_para* para, char* val) {
     para->count++;
     para->config = realloc(para->config, sizeof(t_config) * para->count);
     if (!para->config) {
-        logger(CRIT, "Error parser config : allocation error (realloc)");
+        fprintf(stderr, "Error parser config : allocation error (realloc)\n");
         return false ;
     }
 
@@ -15,7 +15,7 @@ bool    parsing_name(t_process_para* para, char* val) {
     para->config[para->count - 1] = current;
     para->config[para->count - 1].name = strdup(val);
     if (!para->config[para->count - 1].name) {
-        logger(CRIT, "Error parser config : allocation error (strdup)");
+        fprintf(stderr, "Error parser config : allocation error (strdup)\n");
         return false ;
     }
     para->config[para->count - 1].has_cmd = false;
@@ -23,7 +23,7 @@ bool    parsing_name(t_process_para* para, char* val) {
     para->config[para->count - 1].umask = 022;
     para->config[para->count - 1].workingDir = strdup("/");
     if (!para->config[para->count - 1].workingDir)  {
-        logger(CRIT, "Error parser config : allocation error (strdup)");
+        fprintf(stderr, "Error parser config : allocation error (strdup)\n");
         return false ;
     }
     para->config[para->count - 1].autoStart = true ;
@@ -44,7 +44,7 @@ bool    parser_list_options_config(char *last_key, char *val, t_config* cfg) {
     if (!strcmp(last_key, "cmd")) {
         cfg->cmd = strdup(val);
         if (!cfg->cmd) {
-            logger(CRIT, "Error parser config : allocation error (strdup)");
+            fprintf(stderr, "Error parser config : allocation error (strdup)\n");
             return false ;
         }
         cfg->has_cmd = true;
@@ -57,13 +57,13 @@ bool    parser_list_options_config(char *last_key, char *val, t_config* cfg) {
         free(cfg->workingDir);
         cfg->workingDir = strdup(val);
         if (!cfg->workingDir) {
-            logger(CRIT, "Error parser config : allocation error (strdup)");
+            fprintf(stderr, "Error parser config : allocation error (strdup)\n");
             return false ;
         }
     }
     else if (!strcmp(last_key, "autostart")) {
         if (!bool_parser(val, &cfg->autoStart)) {
-            logger(DEBG, "Error config file : Bad Paramater 'autostart'");
+            fprintf(stderr, "Error config file : Bad Paramater 'autostart'\n");
             return false ;
         }
     }
@@ -82,29 +82,33 @@ bool    parser_list_options_config(char *last_key, char *val, t_config* cfg) {
     else if (!strcmp(last_key, "stdout")) {
         cfg->stdout = strdup(val);
         if (!cfg->stdout)  {
-            logger(CRIT, "Error parser config : allocation error (strdup)");
+            fprintf(stderr, "Error parser config : allocation error (strdup)\n");
             return false ;
         }
     }
     else if (!strcmp(last_key, "stderr")) {
         cfg->stderr = strdup(val);
         if (!cfg->stderr)  {
-            logger(CRIT, "Error parser config : allocation error (strdup)");
+            fprintf(stderr, "Error parser config : allocation error (strdup)\n");
             return false ;
         }
+    }
+    else {
+        fprintf(stderr, "Error config file : Parameter unknown '%s'\n", last_key);
+        return false ;
     }
 
     return true ;
 }
-//------------------------------------------------------> ici logger
+
 bool    parser_numprocs(char *val, t_config* cfg) {
     
     if (!int_parser(val, &cfg->numProcs)) {
-        printf("Error config file : Bad Paramater 'numprocs'\n");
+        fprintf(stderr, "Error config file : Bad Paramater 'numprocs'\n");
         return false ;
     }
     if (cfg->numProcs < 0) {
-        printf("Error config file : Bad Paramater 'numprocs'\n");
+        fprintf(stderr, "Error config file : Bad Paramater 'numprocs'\n");
         return false ;
     }
     return true ;
@@ -113,11 +117,11 @@ bool    parser_numprocs(char *val, t_config* cfg) {
 bool    parser_umask(char *val, t_config* cfg) {
     
     if (!int_parser(val, &cfg->umask)) {
-        printf("Error config file : Bad Paramater 'umask'\n");
+        fprintf(stderr, "Error config file : Bad Paramater 'umask'\n");
         return false ;
     }
     if (cfg->umask < 0 || cfg->umask > 511) {
-        printf("Error config file : Bad Paramater 'umask'\n");
+        fprintf(stderr, "Error config file : Bad Paramater 'umask'\n");
         return false ;
     }
     return true ;
@@ -141,18 +145,18 @@ bool    parser_autorestart(char *val, t_config* cfg) {
             return true ;
     }   
     else
-        printf("Error config file : Bad Paramater 'autorestart'\n");
+        fprintf(stderr, "Error config file : Bad Paramater 'autorestart'\n");
     return false ;
 }
 
 bool    parser_startretries(char *val, t_config* cfg) {
     
     if (!int_parser(val, &cfg->startRetries)) {
-        printf("Error config file : Bad Paramater 'startretries'\n");
+        fprintf(stderr, "Error config file : Bad Paramater 'startretries'\n");
         return false ;
     }
     if (cfg->startRetries < 0) {
-        printf("Error config file : Bad Paramater 'startretries'\n");
+        fprintf(stderr, "Error config file : Bad Paramater 'startretries'\n");
         return false ;
     }
     return true ;
@@ -163,13 +167,13 @@ bool    parser_exitcodes_no_sequence(char* val, t_config* cfg) {
 
     int code;
     if (!int_parser(val, &code)) {
-        printf("Error config file : Bad Paramater 'exitcodes'\n");
+        fprintf(stderr, "Error config file : Bad Paramater 'exitcodes'\n");
         return false ;
     }
     
     int* codes = malloc(sizeof(int));
     if (!codes) {
-        printf("Error config file : Bad Paramater 'exitcodes'\n");
+        fprintf(stderr, "Error config file : Bad Paramater 'exitcodes'\n");
         return false ;
     }
 
@@ -183,12 +187,12 @@ bool    parser_exitcodes_no_sequence(char* val, t_config* cfg) {
 bool    parser_starttime(char *val, t_config *cfg) {
     
     if (!int_parser(val, &cfg->startTime)) {
-        printf("Error config file : Bad Paramater 'starttime'\n");
+        fprintf(stderr, "Error config file : Bad Paramater 'starttime'\n");
         return false ;
     }
     
     if (cfg->startTime < 0) {
-        printf("Error config file : Bad Paramater 'starttime'\n");
+        fprintf(stderr, "Error config file : Bad Paramater 'starttime'\n");
         return false ;
     }
 
@@ -202,19 +206,19 @@ bool    parser_stopsignal(char *val, t_config* cfg) {
             return true ;
         }
     }
-    printf("Error config file : Bad Paramater 'sstopsignal'\n");
+    fprintf(stderr, "Error config file : Bad Paramater 'stopsignal'\n");
     return false ;
 }
 
 bool    parser_stoptime(char *val, t_config *cfg) {
     
     if (!int_parser(val, &cfg->stopTime)) {
-        printf("Error config file : Bad Paramater 'stoptime'\n");
+        fprintf(stderr, "Error config file : Bad Paramater 'stoptime'\n");
         return false ;
     }
     
     if (cfg->stopTime < 0) {
-        printf("Error config file : Bad Paramater 'stoptime'\n");
+        fprintf(stderr, "Error config file : Bad Paramater 'stoptime'\n");
         return false ;
     }
 
@@ -256,12 +260,14 @@ bool    parser_env(yaml_parser_t* parser, yaml_event_t* event, t_config* cfg) {
         
         char* value = strdup((char*)event->data.scalar.value);
         if (!value) {
+            fprintf(stderr, "Error parser config : allocation error (strdup)\n");
             free(key);
             return false ;
         }
 
         t_env_p* tmp = realloc(envs, sizeof(t_env_p) * (count + 1));
         if (!tmp) {
+            fprintf(stderr, "Error parser config : allocation error (realloc)\n");
             free(key);
             free(value);
             return false ;
@@ -303,13 +309,15 @@ bool    parser_exitcodes(yaml_parser_t* parser, yaml_event_t* event, t_config* c
         }
 
         int code;
-        if (!int_parser((char*)event->data.scalar.value, &code))
+        if (!int_parser((char*)event->data.scalar.value, &code)) {
+            fprintf(stderr, "Error config file : Bad Paramater 'exitcodes'\n");
             return false ; 
+        }
         
         int *tmp = realloc(codes, sizeof(int) * (code_count + 1));
         if (!tmp) {
+            fprintf(stderr, "Error parser config : allocation error (realloc)\n");
             free(codes);
-            fprintf(stderr, "Memory error\n");
             return false;
         }
         codes = tmp;
@@ -328,7 +336,7 @@ bool    parser_option_config_requis(t_process_para* para) {
     for (unsigned int i = 0; i < para->count; i++) {
         t_config*   conf = &para->config[i];
         if (!conf->cmd) {
-            printf("Error config file : Required Paramater 'cmd'\n");
+            fprintf(stderr, "Error config file : Required Paramater 'cmd'\n");
             return false ;
         }
     }

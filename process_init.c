@@ -4,8 +4,10 @@ bool    init_process_struct(t_procs* proc, t_config* conf, unsigned int j) {
 
     proc->config = conf;
     proc->exec = malloc(sizeof(t_execs) * 1);
-    if (!proc->exec)
+    if (!proc->exec) {
+        fprintf(stderr, "Error init exec : (malloc) %s\n", strerror(errno));
         return false ;
+    }
 
     if (!splitWordsArgv(&proc->exec->argv, conf->cmd))
         return false ;
@@ -32,7 +34,7 @@ bool    init_process_struct(t_procs* proc, t_config* conf, unsigned int j) {
     proc->count_retries = 0;
     proc->start_run = 0;
     proc->count_restart = 0;
-    
+
     return true ;
 }
 
@@ -40,8 +42,10 @@ bool    buildStd_process(char* std, char** ptr, t_config* conf, int j) {
 
     if (conf->numProcs == 1) {
         (*ptr) = strdup(std);
-        if (!(*ptr))
+        if (!(*ptr)) {
+            fprintf(stderr, "Error init std : allocation error (strdup)\n");
             return false ;
+        }
     }
     else {
         const char  *c = strchr(std, '.');
@@ -52,13 +56,16 @@ bool    buildStd_process(char* std, char** ptr, t_config* conf, int j) {
             pos = c - std; 
 
         char*    idstr = ft_itoa(j);
-        if (!idstr)
+        if (!idstr) {
+            fprintf(stderr, "Error init std : allocation error (calloc)\n");
             return false ;
+        }
         size_t  idlen = strlen(idstr);
 
         size_t newlen = strlen(std) + 1 + idlen + 1;
         (*ptr) = malloc(newlen);
         if (!(*ptr)) {
+            fprintf(stderr, "Error init std : allocation error (malloc)\n");
             free(idstr);
             return false ;
         }
@@ -81,8 +88,10 @@ bool    build_default_Std_process(char** ptr, t_config *conf, char *end, int j) 
     
     if (conf->numProcs > 1) {
         idstr = ft_itoa(j);
-        if (!idstr)
+        if (!idstr) {
+            fprintf(stderr, "Error init std : allocation error (calloc)\n");
             return false ;
+        }
         len = strlen(workdir) + strlen(conf->name) + 1 + strlen(idstr) + strlen(end) + 1;
     }
     else
@@ -91,6 +100,7 @@ bool    build_default_Std_process(char** ptr, t_config *conf, char *end, int j) 
     if (!(*ptr)) {
         if (conf->numProcs > 1)
             free(idstr);
+        fprintf(stderr, "Error init default std : allocation error (malloc)\n");
         return false ;
     }
 
@@ -129,13 +139,16 @@ bool    splitWordsArgv(char ***ptr, char *input) {
             i++;
 
         word = malloc((i - start) + 1);
-        if (!word)
+        if (!word) {
+            fprintf(stderr, "Error init argv : allocation error (malloc)\n");
             return false ;
+        }
         strncpy(word, &input[start], (i - start));
         word[(i - start)] = '\0';
 
         tmp = realloc(*ptr, (count + 2) * sizeof(char*));
         if (!tmp) {
+            fprintf(stderr, "Error init argv : allocation error (realloc)\n");
             free(word);
             return false ;
         }
@@ -159,8 +172,10 @@ bool    buildEnvp(char ***ptr, t_config* conf) {
     }
     t_env_p*    loop = conf->env;
     (*ptr) = malloc((conf->count_env + 1) * sizeof(char*));
-    if (!(*ptr))
+    if (!(*ptr)) {
+        fprintf(stderr,  "Error init envp : allocation error (malloc)\n");
         return false ;
+    }
 
     size_t  key_len;
     size_t  val_len;
@@ -171,8 +186,10 @@ bool    buildEnvp(char ***ptr, t_config* conf) {
         val_len = strlen(loop[i].value);
 
         tmp = malloc(key_len + 1 + val_len + 1);
-        if (!tmp)
+        if (!tmp) {
+            fprintf(stderr, "Error init envp : allocation error (malloc)\n");
             return false;
+        }
 
         memcpy(tmp, loop[i].key, key_len);
         tmp[key_len] = '=';
@@ -189,7 +206,9 @@ bool    buildEnvp(char ***ptr, t_config* conf) {
 bool    open_file(char* std, int* fd) {
     (*fd) = open(std, O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if ((*fd) < 0) {
-        perror("open std");
+        char    buffer[100];
+        snprintf(buffer, sizeof(buffer), "Error open stdout/err : %s", strerror(errno));
+        logger(CRIT, buffer);
         return false ;
     }
     return true ;

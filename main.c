@@ -47,24 +47,25 @@ const char* enumtoString(ProcessStatus stat) {
 
 int main(int argc, char **argv) {
 
-    if (!open_logger_file("/tmp/Supervisor.log"))
-        return 1 ;
-
-    // PARSING PART + INIT PARA
+    // BOOT START SUPERVISOR PARSING CONFIG 1ER + INIT STRUCT PARA 
     if (!parser_name_file(argv, argc))
         return 1;
-
     t_process_para* para = NULL;
     para = malloc(sizeof(t_process_para) * 1);
     if (!para) {
-        printf("Error malloc\n");
+        fprintf(stderr, "Error parser : (malloc) %s\n", strerror(errno));
         return 1;
     }
     if (!parser_file_yaml(argv[1], para)) {
         free_process_para(para);
         return 1;
     }
-    /////////////////////////////
+
+    // OPEN LOGGER ONLY IF CONFIG FILE VALID 
+    if (!open_logger_file("/tmp/Supervisor.log")) {
+        free_process_para(para);
+        return 1 ;
+    }
 
     // A enlever PRINT TEST CONFIG /////////////////////////////////
     for (unsigned int i = 0; i < para->count; i++) {
@@ -93,32 +94,40 @@ int main(int argc, char **argv) {
     t_superMap*     superMap = NULL;
     superMap = malloc(sizeof(t_superMap) * 1);
     if (!superMap) {
+        fprintf(stderr, "Error init map : allocation error (malloc)\n");
         free_process_para(para);
+        fclose(g_fdlog);
         return 1;
     }
     if (!init_supervisor_processMap(para, &superMap)) {
         free_process_para(para);
         free_supervisor(&superMap);
+        fclose(g_fdlog);
         return 1 ;
     }
 
     //printf_processus(&superMap);
-    //////////////////////////
 
     // START SUPERVISOR BOOT
     if (!autostart_boot(&superMap, para)) {
         free_process_para(para);
         free_supervisor(&superMap);
+        fclose(g_fdlog);
         return 1 ;
     }
+    // MAIN LOOP -> ajouter boucle startretrie  
     if (!main_loop(&superMap, para)) {
         free_process_para(para);
         free_supervisor(&superMap);
+        fclose(g_fdlog);
         return 1 ;
     }
 
     free_supervisor(&superMap);
     free_process_para(para);
+    fclose(g_fdlog);
+
+    end_supervisor_logger();
 
     return 0;
 }

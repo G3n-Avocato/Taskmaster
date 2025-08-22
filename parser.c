@@ -4,23 +4,23 @@ bool    parser_name_file(char **argv, int argc) {
     const char* tmp = strrchr(argv[1], '.');
 
     if (argc != 2 || !tmp) {
-        logger(DEBG, "Wrong config file");
+        message_logger("Wrong config file", stderr);
         return false ;
     }
 
     if (strcmp(tmp, ".yaml") != 0) {
         if (strcmp(tmp, ".yml") != 0) {
-            logger(DEBG, "Wrong type for config file");
+            message_logger("Wrong type for config file", stderr);
             return false ;
         }
     }
 
     if (access(argv[1], F_OK) == -1) {
-        logger(DEBG, "Config file does not exist");
+        message_logger("Config file does not exist", stderr);
         return false ;
     }
     if (access(argv[1], R_OK) == -1) {
-        logger(DEBG, "Config file not accessible");
+        message_logger("Config file not accessible", stderr);
         return false ;
     }
 
@@ -31,7 +31,7 @@ bool    parser_file_yaml(char *file, t_process_para* para) {
 
     FILE*   fd = fopen(file, "r");
     if (!fd) {
-        logger(CRIT, strerror(errno));
+        fprintf(stderr, "Error config file : %s", strerror(errno));
         return false ;
     }
 
@@ -65,7 +65,7 @@ bool    parser_file_yaml(char *file, t_process_para* para) {
                     if (!strcmp(val, "programs"))
                         state = ST_IN_PROGRAMS;
                     else {
-                        logger(DEBG, "Error config file : Expected 'programs' key");
+                        message_logger("Error config file : Expected 'programs' key", stderr);
                         free(val);
                         free_lib_yaml(&parser, &event, fd);
                         return false ;
@@ -108,12 +108,18 @@ bool    parser_file_yaml(char *file, t_process_para* para) {
                     t_config* cfg = &para->config[para->count - 1];
                     
                     if (!parser_exitcodes(&parser, &event, cfg)) {
-                        free_var_yaml(&val, &last_key);
+                        free(last_key);
                         free_lib_yaml(&parser, &event, fd);
                         return false;
                     }
                     free(last_key);
                     last_key = NULL;
+                }
+                else if (last_key) {
+                    fprintf(stderr, "Error config file : Parameter unknown '%s'\n", last_key);
+                    free(last_key);
+                    free_lib_yaml(&parser, &event, fd);
+                    return false ;
                 }
                 break ;
             case YAML_MAPPING_START_EVENT:
@@ -121,12 +127,18 @@ bool    parser_file_yaml(char *file, t_process_para* para) {
                     t_config* cfg = &para->config[para->count - 1];
 
                     if (!parser_env(&parser, &event, cfg)) {
-                        free_var_yaml(&val, &last_key);
+                        free(last_key);
                         free_lib_yaml(&parser, &event, fd);
                         return false;
                     }
                     free(last_key);
                     last_key = NULL;
+                }
+                else if (last_key) {
+                    fprintf(stderr, "Error config file : Parameter unknown '%s'\n", last_key);
+                    free(last_key);
+                    free_lib_yaml(&parser, &event, fd);
+                    return false ;
                 }
                 break ;
             case YAML_MAPPING_END_EVENT:
@@ -155,9 +167,7 @@ bool    parser_file_yaml(char *file, t_process_para* para) {
 bool    syntax_error_file_config(yaml_parser_t* parser, yaml_event_t* event, FILE* fd) {
 
     if (!yaml_parser_parse(parser, event)) {
-        char    buffer[30];
-        snprintf(buffer, sizeof(buffer), "Error config file : %s at %lu, column %lu\n", parser->problem, parser->problem_mark.line + 1, parser->problem_mark.column + 1);
-        logger(DEBG, buffer);
+        fprintf(stderr, "Error config file : %s at %lu, column %lu\n", parser->problem, parser->problem_mark.line + 1, parser->problem_mark.column + 1);
         free_lib_yaml(parser, event, fd);
         return false ;
     }

@@ -69,17 +69,8 @@ typedef struct s_signal_entry {
 
 static const t_signal_entry signalMap[] = {
     {"HUP", SIGHUP}, {"INT", SIGINT}, {"QUIT", SIGQUIT},
-    {"ILL", SIGILL}, {"TRAP", SIGTRAP}, {"ABRT", SIGABRT},
-    {"IOT", SIGIOT}, {"BUS", SIGBUS}, {"FPE", SIGFPE},
-    {"KILL", SIGKILL}, {"USR1", SIGUSR1}, {"SEGV", SIGSEGV},
-    {"USR2", SIGUSR2}, {"PIPE", SIGPIPE}, {"ALRM", SIGALRM},
-    {"TERM", SIGTERM}, {"STKFLT", SIGSTKFLT}, {"CHLD", SIGCHLD},
-    {"CONT", SIGCONT}, {"STOP", SIGSTOP}, {"TSTP", SIGTSTP},
-    {"TTIN", SIGTTIN}, {"TTOU", SIGTTOU}, {"URG", SIGURG},
-    {"XCPU", SIGXCPU}, {"XFSZ", SIGXFSZ}, {"VTALRM", SIGVTALRM},
-    {"PROF", SIGPROF}, {"WINCH", SIGWINCH}, {"POLL", SIGPOLL},
-    {"IO", SIGIO}, {"PWR", SIGPWR}, {"SYS", SIGSYS}
-
+    {"KILL", SIGKILL}, {"USR1", SIGUSR1}, {"USR2", SIGUSR2},
+    {"TERM", SIGTERM}
 };
 
 static const size_t signal_map_size = sizeof(signalMap) / sizeof(signalMap[0]);
