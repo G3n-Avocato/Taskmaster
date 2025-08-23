@@ -4,8 +4,9 @@ Note Laura :
 Fait :
 
 
-* INFO ->ajouter les loggers pour les infos de base start - end - ctrl display - config reload
-* STATUS DE CERTAIN PROGRAMME (etats des programmes) voir exemple_1
+/!\ Log in Supervisor.log ne marche plus /!\ a voir (-> ajouter logger info au program)
+Remttre log "supervisor.c" en place pour les mallocs etc ..
+changer system loop avec une boucle pour all 
 
 
 En cours :
@@ -13,17 +14,14 @@ En cours :
 
 * logger supervisord + * tester les sorties du logger 
 
-/!\ Log in Supervisor.log ne marche plus /!\ a voir (-> ajouter logger info au program)
-
-Remttre log "supervisor.c" en place pour les mallocs etc ..
-
 * ALL Revoir le main et le system de loop a voir avec le controlleur 
+-----------------> yes ajouter childhandler system 
+
+* ajouter partie controller
 
 
 A faire : 
 
-
-* ajouter partie controller
 
 * refaire parsing pour reload case avec logger (adapter les fct et les sortie en cas d'erreur config supervisor ne s'arrete pas)
 
@@ -35,7 +33,6 @@ A faire :
 
 
 * revoir stdout et stderr des processus -> en cas de max output il faut pouvoir gerer ca 
-* tester bad process with thread check erreur 
 
 
 

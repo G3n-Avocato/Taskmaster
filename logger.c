@@ -22,6 +22,7 @@ bool    timestamp_logger() {
     strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", tm_info);
 
     fprintf(g_fdlog, "%s,%03ld", buffer, tv.tv_usec / 1000);
+    fflush(g_fdlog);
 
     return true ;
 }
@@ -55,13 +56,15 @@ bool    loglevel_logger(LogLevel nvl) {
     }
 
     fprintf(g_fdlog, " %s ", buf);
+    fflush(g_fdlog);
 
     return true ;
 }
 
-bool    message_logger(char* msg, FILE* fd) {
-    (void)fd;
+bool    message_logger(char* msg) {
+
     fprintf(g_fdlog, "%s\n", msg);
+    fflush(g_fdlog);
 
     return true ;
 }
@@ -70,7 +73,7 @@ bool    logger(LogLevel nvl, char* msg) {
 
     timestamp_logger();
     loglevel_logger(nvl);
-    message_logger(msg, g_fdlog);
+    message_logger(msg);
 
     return true ;
 }
@@ -111,7 +114,7 @@ bool    start_process_logger(char *name, int id, pid_t pid) {
 bool    running_process_logger(char *name, int id, int t) {
     
     int len = strlen(name);
-    char buffer[50 + len];
+    char buffer[100 + len];
     snprintf(buffer, sizeof(buffer), "success: %s_%d entered RUNNING state, process has stayed up for > than %d seconds (startsecs)", name, id, t);
     logger(INFO, buffer);
 
@@ -192,8 +195,18 @@ bool    updating_process_logger(char *name) {
 bool    fatal_state_logger(char *name, int id) {
 
     int len = strlen(name);
-    char buffer[50 + len];
+    char buffer[100 + len];
     snprintf(buffer, sizeof(buffer), "gave up: %s_%d entered FATAL state, too many start retries too quickly", name, id);
+    logger(INFO, buffer);
+
+    return true ;
+}
+
+bool    fatal_logger(char *name, int id) {
+
+    int len = strlen(name);
+    char buffer[100 + len];
+    snprintf(buffer, sizeof(buffer), "gave up: %s_%d entered FATAL state", name, id);
     logger(INFO, buffer);
 
     return true ;
@@ -202,7 +215,7 @@ bool    fatal_state_logger(char *name, int id) {
 bool    error_sigkill_logger(char *name, int id, int pid, char* msg) {
 
     int len = strlen(name);
-    char buffer[50 + len];
+    char buffer[100 + len];
     snprintf(buffer, sizeof(buffer), "killing '%s_%d' (pid %d) failed: %s", name, id, pid, msg);
     logger(WARN, buffer);
 
@@ -213,7 +226,7 @@ bool    error_kill_logger(char *name, int id, int pid, int sign, char* msg) {
 
     const char *signal = signal_int_tostring(sign);
     int len = strlen(name);
-    char buffer[50 + len];
+    char buffer[100 + len];
     snprintf(buffer, sizeof(buffer), "killing '%s_%d' (pid %d) with SIG%s failed: %s", name, id, pid, signal, msg);
     logger(WARN, buffer);
 

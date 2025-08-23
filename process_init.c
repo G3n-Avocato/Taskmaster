@@ -34,6 +34,8 @@ bool    init_process_struct(t_procs* proc, t_config* conf, unsigned int j) {
     proc->count_retries = 0;
     proc->start_run = 0;
     proc->count_restart = 0;
+    proc->start_restart = 0;
+    proc->boot_auto = false;
 
     return true ;
 }

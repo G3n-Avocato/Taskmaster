@@ -1,5 +1,23 @@
 # include "supervisor.h"
 
+void	sigchld_handler(int sign) {
+	(void)sign;
+	sigchld_received = 1;
+}
+
+bool	setup_sigchld_handler() {
+	struct sigaction sa;
+	sa.sa_handler = sigchld_handler;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;
+
+	if (sigaction(SIGCHLD, &sa, NULL) == -1) {
+		perror("sigaction");
+		return false ;
+	}
+	return true ;
+}
+
 static int	ft_nlen(int n)
 {
 	int	i;

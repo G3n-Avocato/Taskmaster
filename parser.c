@@ -4,23 +4,23 @@ bool    parser_name_file(char **argv, int argc) {
     const char* tmp = strrchr(argv[1], '.');
 
     if (argc != 2 || !tmp) {
-        message_logger("Wrong config file", stderr);
+        fprintf(stderr, "Wrong config file\n");
         return false ;
     }
 
     if (strcmp(tmp, ".yaml") != 0) {
         if (strcmp(tmp, ".yml") != 0) {
-            message_logger("Wrong type for config file", stderr);
+            fprintf(stderr, "Wrong type for config file\n");
             return false ;
         }
     }
 
     if (access(argv[1], F_OK) == -1) {
-        message_logger("Config file does not exist", stderr);
+        fprintf(stderr, "Config file does not exist\n");
         return false ;
     }
     if (access(argv[1], R_OK) == -1) {
-        message_logger("Config file not accessible", stderr);
+        fprintf(stderr, "Config file not accessible\n");
         return false ;
     }
 
@@ -65,7 +65,7 @@ bool    parser_file_yaml(char *file, t_process_para* para) {
                     if (!strcmp(val, "programs"))
                         state = ST_IN_PROGRAMS;
                     else {
-                        message_logger("Error config file : Expected 'programs' key", stderr);
+                        fprintf(stderr, "Error config file : Expected 'programs' key\n");
                         free(val);
                         free_lib_yaml(&parser, &event, fd);
                         return false ;

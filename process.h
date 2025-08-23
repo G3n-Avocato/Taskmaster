@@ -38,8 +38,9 @@ typedef struct s_processus {
     time_t          start_run;
     bool            exit_code;
     bool            run_reached;
+    bool            boot_auto;
     int             count_retries;
-    //time_t          start_restart;
+    time_t          start_restart;
     int             count_restart;
 } t_procs;
 
@@ -52,7 +53,7 @@ typedef struct s_supervisorMap {
 // process.c
 bool    startProcess(t_procs* proc, t_superMap** superMap, t_process_para* para);
 void    parent_exec_proc(t_procs* proc);
-bool    waitpid_monitoring_status(t_procs* proc);
+bool    waitpid_monitoring_status(t_superMap** superMap);
 void    child_exec_proc(t_procs* proc, t_superMap** superMap, t_process_para* para);
 bool    isProcessUp(pid_t processus);
 bool    stopProcess(t_procs* proc);
@@ -68,6 +69,8 @@ bool    open_file(char* std, int* fd);
 bool    open_file_std(t_execs* exec);
 
 // process_init_utils.c
-char	*ft_itoa(int n);
+char*   ft_itoa(int n);
+void	sigchld_handler(int sign);
+bool	setup_sigchld_handler();
 
 #endif

@@ -1,7 +1,9 @@
 #include "supervisor.h"
 
-int g_processCount = 0;
-FILE* g_fdlog;
+int                     g_processCount = 0;
+FILE*                   g_fdlog;
+volatile sig_atomic_t   sigchld_received = 0;
+
 
 // fct de test pour printf config 
 const char*     printf_var(t_StateRestart res) {
@@ -67,6 +69,8 @@ int main(int argc, char **argv) {
         return 1 ;
     }
 
+    start_supervisor_logger();
+    
     // A enlever PRINT TEST CONFIG /////////////////////////////////
     for (unsigned int i = 0; i < para->count; i++) {
         t_config*   conf = &para->config[i];
@@ -109,13 +113,18 @@ int main(int argc, char **argv) {
     //printf_processus(&superMap);
 
     // START SUPERVISOR BOOT
-    if (!autostart_boot(&superMap, para)) {
+    //if (!autostart_boot(&superMap, para)) {
+    //    free_process_para(para);
+    //    free_supervisor(&superMap);
+    //    fclose(g_fdlog);
+    //    return 1 ;
+    //}
+    
+    if(!setup_sigchld_handler()) {
         free_process_para(para);
         free_supervisor(&superMap);
         fclose(g_fdlog);
-        return 1 ;
     }
-    // MAIN LOOP -> ajouter boucle startretrie  
     if (!main_loop(&superMap, para)) {
         free_process_para(para);
         free_supervisor(&superMap);
