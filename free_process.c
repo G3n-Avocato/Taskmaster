@@ -30,3 +30,28 @@ void    free_supervisor(t_superMap** superMap) {
         free((*superMap));
     }
 }
+
+void    free_ctrl(pthread_t tid) {
+    pthread_cancel(tid);
+    pthread_join(tid, NULL);
+
+    for (int i = 0; i < histo_size; i++) {
+        free(history[i]);
+    }
+}
+
+void    free_exit_supervisor(t_superMap** superMap, t_process_para* para, pthread_t tid) {
+    end_supervisor_logger();
+
+    free_supervisor(superMap);
+    free_process_para(para);
+    fclose(g_fdlog);
+    free_ctrl(tid);
+}
+
+void    free_exit_para(t_process_para* para) {
+    end_supervisor_logger();
+
+    free_process_para(para);
+    fclose(g_fdlog);
+}

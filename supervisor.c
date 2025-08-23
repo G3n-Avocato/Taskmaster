@@ -31,28 +31,21 @@ bool    init_supervisor_processMap(t_process_para* para, t_superMap** superMap) 
     return true ;
 }
 
-bool    autostart_boot(t_superMap** superMap, t_process_para* para, int i) {
-
-    if (!(*superMap)[i].proc.boot_auto && (*superMap)[i].proc.config->autoStart) {
-        if (!startProcess(&(*superMap)[i].proc, superMap, para))
-            return false ;
-        (*superMap)[i].proc.boot_auto = true;
-    }
-    return true ;
-}
-
 bool    main_loop(t_superMap** superMap, t_process_para* para) {
     
     struct timespec wait_for = {0};
     wait_for.tv_sec = 0;
     wait_for.tv_nsec = 100 * 1000000L;
 
-    while (1) {
+    while (running) {
 
         if (sigchld_received) {
             waitpid_monitoring_status(superMap);
             sigchld_received = 0;
         }
+
+        if (cmd_ready)
+            command_ctrl();
         
         for (int i = 0; i < g_processCount; i++) {
             
@@ -69,13 +62,38 @@ bool    main_loop(t_superMap** superMap, t_process_para* para) {
             if (!autoRestart_loop(superMap, para, i)) {
                 return false ;
             }
-            printf("%d - %s - %d -----------> %s\n\n", (*superMap)[i].proc.processus, (*superMap)[i].name, (*superMap)[i].id, enumtoString((*superMap)[i].proc.state));
+            //printf("%d - %s - %d -----------> %s\n\n", (*superMap)[i].proc.processus, (*superMap)[i].name, (*superMap)[i].id, enumtoString((*superMap)[i].proc.state));
     
             //if (!test_stopProcess(superMap, i))
             //    return false ;
 
         }
         nanosleep(&wait_for, NULL);
+    }
+    return true ;
+}
+
+void    command_ctrl() {
+    
+    char tmp[MAX_CMD];
+    
+    strncpy(tmp, cmd_buffer, MAX_CMD);
+    tmp[MAX_CMD - 1] = '\0';
+    
+    cmd_ready = 0;
+    process_command(tmp);
+    if (running) {
+        printf("> ");
+        fflush(stdout);
+    }
+}
+
+bool    autostart_boot(t_superMap** superMap, t_process_para* para, int i) {
+
+    if (!(*superMap)[i].proc.boot_auto && (*superMap)[i].proc.config->autoStart) {
+        if (!startProcess(&(*superMap)[i].proc, superMap, para))
+            return false ;
+        (*superMap)[i].proc.boot_auto = true;
     }
     return true ;
 }
@@ -87,33 +105,16 @@ bool    state_Running(t_superMap** superMap, int i) {
     if (p_state == STARTING && isProcessUp((*superMap)[i].proc.processus)) {
         time_t  end = time(NULL);
         double  diff_time = difftime(end, (*superMap)[i].proc.start_run);
-        printf("Running state %s-%d difftime %f\n", (*superMap)[i].name, (*superMap)[i].id, diff_time); ///
+        //printf("Running state %s-%d difftime %f\n", (*superMap)[i].name, (*superMap)[i].id, diff_time); ///
         
         if (diff_time >= (*superMap)[i].proc.config->startTime) {
-            printf("%f\n", diff_time); ///
+            //printf("%f\n", diff_time); ///
             
             (*superMap)[i].proc.state = RUNNING;
             (*superMap)[i].proc.run_reached = true ;
             running_process_logger((*superMap)[i].name, (*superMap)[i].id - 1, (*superMap)[i].proc.config->startTime);
         }
     }
-
-    return true ;
-}
-
-/// testeur a enlever
-bool    test_stopProcess(t_superMap** superMap, int i) {
-
-        ProcessStatus   p_state = (*superMap)[i].proc.state;
-        if (p_state == RUNNING) {
-            time_t  end = time(NULL);
-            double  diff_time = difftime(end, (*superMap)[i].proc.start_run);
-            printf("stopprocess difftime %f\n", diff_time);
-            if (diff_time > 5) {
-                if (!stopProcess(&(*superMap)[i].proc))
-                    return false ;
-            }
-        }
 
     return true ;
 }
@@ -197,4 +198,21 @@ void    printf_processus(t_superMap** super) {
         printf("\n");
         printf("autostart in config in procs ----------> %d\n", (*super)[i].proc.config->autoStart);
     }
+}
+
+/// testeur a enlever
+bool    test_stopProcess(t_superMap** superMap, int i) {
+
+        ProcessStatus   p_state = (*superMap)[i].proc.state;
+        if (p_state == RUNNING) {
+            time_t  end = time(NULL);
+            double  diff_time = difftime(end, (*superMap)[i].proc.start_run);
+            printf("stopprocess difftime %f\n", diff_time);
+            if (diff_time > 5) {
+                if (!stopProcess(&(*superMap)[i].proc))
+                    return false ;
+            }
+        }
+
+    return true ;
 }

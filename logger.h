@@ -1,9 +1,6 @@
 #ifndef LOGGER_H
 # define LOGGER_H
 
-#include <time.h>
-#include <sys/time.h>
-
 extern FILE* g_fdlog;
 
 typedef enum Log_Level {
@@ -25,7 +22,7 @@ bool    logger(LogLevel nvl, char* msg);
 
 bool    start_supervisor_logger();
 bool    end_supervisor_logger();
-bool    ctrl_supervisor_logger(); // a inclure in ctrl
+bool    ctrl_supervisor_logger();
 
 bool    start_process_logger(char *name, int id, pid_t pid);
 bool    running_process_logger(char *name, int id, int t);

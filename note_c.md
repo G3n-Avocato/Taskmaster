@@ -3,22 +3,21 @@ Note Laura :
 
 Fait :
 
-
 /!\ Log in Supervisor.log ne marche plus /!\ a voir (-> ajouter logger info au program)
 Remttre log "supervisor.c" en place pour les mallocs etc ..
 changer system loop avec une boucle pour all 
 
-
-En cours :
-
-
 * logger supervisord + * tester les sorties du logger 
-
 * ALL Revoir le main et le system de loop a voir avec le controlleur 
 -----------------> yes ajouter childhandler system 
 
+* signal ctrl+/ ctrl+quit
 * ajouter partie controller
 
+
+En cours :
+
+* fct pour chaque commande - start - stop - reaload - status - restart 
 
 A faire : 
 
@@ -29,11 +28,11 @@ A faire :
 -> fct de comparaison pour reload le fichier et voir si changement pour relancer ou non 
 -> boucle fct pour trouver les groupname ou des pos id precis
 
-* signal ctrl+/ ctrl+quit
 
-
+* ajouter loger fct in logger.h
 * revoir stdout et stderr des processus -> en cas de max output il faut pouvoir gerer ca 
-
+-> stdout -> creer old -> copier dans old -> efface stdout 
+-> parent verif max fichier stdout
 
 
 TEST A FAIRE :

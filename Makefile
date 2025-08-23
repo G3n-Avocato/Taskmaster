@@ -11,7 +11,9 @@ SRCS = main.c \
 		process_init_utils.c \
 		free_process.c \
 		free_parser.c \
-		logger.c
+		logger.c \
+		supervisor_ctrl.c \
+		supervisor_ctrl_utils.c
 
 OBJS = $(addprefix $(OBJ_DIR)/, $(SRCS:.c=.o))
 
