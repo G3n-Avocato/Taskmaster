@@ -9,6 +9,8 @@
 #include <time.h>
 #include <sys/time.h>
 
+
+
 typedef enum ProcessStatus {
     STOPPED,
     STARTING,
@@ -42,6 +44,7 @@ typedef struct s_processus {
     int             count_retries;
     time_t          start_restart;
     int             count_restart;
+    bool            ctrl_cmd;
 } t_procs;
 
 typedef struct s_supervisorMap {

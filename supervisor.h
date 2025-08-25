@@ -13,7 +13,7 @@ extern volatile sig_atomic_t    sigchld_received;
 bool    init_supervisor_processMap(t_process_para* para, t_superMap** superMap);
 bool    autostart_boot(t_superMap** superMap, t_process_para* para, int i);
 bool    main_loop(t_superMap** superMap, t_process_para* para);
-void    command_ctrl();
+void    command_ctrl(t_superMap** superMap, t_process_para* para);
 bool    state_Running(t_superMap** superMap, int i);
 bool    startRetries_loop(t_superMap** superMap, t_process_para *para, int i);
 bool    autoRestart_loop(t_superMap** superMap, t_process_para *para, int i);

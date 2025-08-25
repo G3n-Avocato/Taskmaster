@@ -23,21 +23,43 @@ extern struct termios orig_termios;
 void    disable_raw_mode();
 void    enable_raw_mode();
 void    add_history(const char *cmd);
-void    call_start_cmd(char **cmd);
-void    call_stop_cmd(char **cmd);
-void    call_restart_cmd(char **cmd);
+void    call_start_cmd(char **cmd, t_superMap** superMap, t_process_para* para);
+void    call_stop_cmd(char **cmd, t_superMap** superMap);
+void    call_restart_cmd(char **cmd, t_superMap** superMap, t_process_para* para);
 void    call_reload_cmd(char **cmd);
-void    call_status_cmd(char **cmd);
-void    process_command(const char *cmd);
+void    call_status_cmd(char **cmd, t_superMap** superMap);
+void    process_command(const char *cmd, t_superMap** superMap, t_process_para* para);
 void*   reader_thread(void *arg);
 
 // supervisor_ctrl_utils.c
-void    handle_sigint(int sig);
-bool	setup_sigint_handler();
-char*   ft_substr(char const *s, unsigned int start, size_t len);
-int     ft_pointer_tab_len(char **ptr);
-void    print_stringss(char **list);
-char**  split(const char* str, char sep);
+void        handle_sigint(int sig);
+bool	    setup_sigint_handler();
+const char* ProcessStatus_toString(ProcessStatus stat);
+char*       ft_substr(char const *s, unsigned int start, size_t len);
+int         ft_pointer_tab_len(char **ptr);
+void        print_stringss(char **list);
+char**      split(const char* str, char sep);
+
+// supervisor_ctrl_cmds.c
+bool    find_name_proc_start(t_superMap** superMap, t_process_para* para, char* group, char* name);
+bool    find_group_proc_start(t_superMap** superMap, t_process_para* para, char* group);
+bool    find_all_proc_start(t_superMap** superMap, t_process_para* para);
+bool    start_cmd(t_procs* proc, t_superMap** superMap, t_process_para* para);
+
+bool    find_name_proc_restart(t_superMap** superMap, t_process_para* para, char* group, char* name);
+bool    find_group_proc_restart(t_superMap** superMap, t_process_para* para, char* group);
+bool    find_all_proc_restart(t_superMap** superMap, t_process_para* para);
+bool    restart_cmd(t_procs* proc, t_superMap** superMap, t_process_para* para);
+
+bool    find_name_proc_stop(t_superMap** superMap, char* group, char* name);
+bool    find_group_proc_stop(t_superMap** superMap, char* group);
+bool    find_all_proc_stop(t_superMap** superMap);
+bool    stop_cmd(t_procs* proc);
+
+bool    find_name_proc_status(t_superMap** superMap, char* group, char* name);
+bool    find_group_proc_status(t_superMap** superMap, char* group);
+bool    find_all_proc_status(t_superMap** superMap);
+bool    status_cmd(t_procs* proc);
 
 // free_process.c
 void    free_ctrl(pthread_t tid);

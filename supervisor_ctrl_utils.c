@@ -28,6 +28,20 @@ bool	setup_sigint_handler() {
 	return true ;
 }
 
+const char* ProcessStatus_toString(ProcessStatus stat) {
+    switch (stat) {
+        case STOPPED: return "STOPPED";
+        case STARTING: return "STARTING";
+        case RUNNING: return "RUNNING";
+        case BACKOFF: return "BACKOFF";
+        case STOPPING: return "STOPPING";
+        case EXITED: return "EXITED";
+        case FATAL: return "FATAL";
+        case UNKNOWN: return "UNKNOWN";
+        default: return "default";
+    }
+}
+
 char	*ft_substr(char const *s, unsigned int start, size_t len)
 {
 	char			*str;

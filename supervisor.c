@@ -45,7 +45,7 @@ bool    main_loop(t_superMap** superMap, t_process_para* para) {
         }
 
         if (cmd_ready)
-            command_ctrl();
+            command_ctrl(superMap, para);
         
         for (int i = 0; i < g_processCount; i++) {
             
@@ -55,12 +55,14 @@ bool    main_loop(t_superMap** superMap, t_process_para* para) {
             if (!state_Running(superMap, i)) {
                 return false ;
             }
-
-            if (!startRetries_loop(superMap, para, i)) {
-                return false ;
+            if (!(*superMap)[i].proc.ctrl_cmd) {
+                if (!startRetries_loop(superMap, para, i))
+                    return false ;
             }
-            if (!autoRestart_loop(superMap, para, i)) {
-                return false ;
+            
+            if (!(*superMap)[i].proc.ctrl_cmd) {
+                if (!autoRestart_loop(superMap, para, i))
+                    return false ;
             }
             //printf("%d - %s - %d -----------> %s\n\n", (*superMap)[i].proc.processus, (*superMap)[i].name, (*superMap)[i].id, enumtoString((*superMap)[i].proc.state));
     
@@ -73,7 +75,7 @@ bool    main_loop(t_superMap** superMap, t_process_para* para) {
     return true ;
 }
 
-void    command_ctrl() {
+void    command_ctrl(t_superMap** superMap, t_process_para* para) {
     
     char tmp[MAX_CMD];
     
@@ -81,7 +83,7 @@ void    command_ctrl() {
     tmp[MAX_CMD - 1] = '\0';
     
     cmd_ready = 0;
-    process_command(tmp);
+    process_command(tmp, superMap, para);
     if (running) {
         printf("> ");
         fflush(stdout);
@@ -94,6 +96,7 @@ bool    autostart_boot(t_superMap** superMap, t_process_para* para, int i) {
         if (!startProcess(&(*superMap)[i].proc, superMap, para))
             return false ;
         (*superMap)[i].proc.boot_auto = true;
+        (*superMap)[i].proc.ctrl_cmd = false; // avoir avec reaload
     }
     return true ;
 }
@@ -105,14 +108,17 @@ bool    state_Running(t_superMap** superMap, int i) {
     if (p_state == STARTING && isProcessUp((*superMap)[i].proc.processus)) {
         time_t  end = time(NULL);
         double  diff_time = difftime(end, (*superMap)[i].proc.start_run);
-        //printf("Running state %s-%d difftime %f\n", (*superMap)[i].name, (*superMap)[i].id, diff_time); ///
         
         if (diff_time >= (*superMap)[i].proc.config->startTime) {
-            //printf("%f\n", diff_time); ///
             
             (*superMap)[i].proc.state = RUNNING;
             (*superMap)[i].proc.run_reached = true ;
             running_process_logger((*superMap)[i].name, (*superMap)[i].id - 1, (*superMap)[i].proc.config->startTime);
+            if ((*superMap)[i].proc.ctrl_cmd) {
+                fprintf(stdout, "%s_%d: started\n", (*superMap)[i].name, ((*superMap)[i].id - 1));
+                fflush(stdout);
+                (*superMap)[i].proc.ctrl_cmd = false;
+            }
         }
     }
 
@@ -135,6 +141,10 @@ bool    startRetries_loop(t_superMap** superMap, t_process_para *para, int i) {
         else if ((*superMap)[i].proc.config->startRetries == (*superMap)[i].proc.count_retries && p_state != FATAL) {
             fatal_logger((*superMap)[i].name, (*superMap)[i].id - 1);
             (*superMap)[i].proc.state = FATAL;
+            if ((*superMap)[i].proc.ctrl_cmd) {
+                fprintf(stderr, "%s_%d: ERROR (abnormal termination)\n", (*superMap)[i].name, (*superMap)[i].id - 1);
+                fflush(stderr);
+            }
         }
         
     }
@@ -156,7 +166,7 @@ bool    autoRestart_loop(t_superMap** superMap, t_process_para *para, int i) {
 
             (*superMap)[i].proc.count_restart++;
             if (!startProcess(&(*superMap)[i].proc, superMap, para))
-                        return false ;
+                return false ;
         }
     }
 

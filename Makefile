@@ -13,7 +13,8 @@ SRCS = main.c \
 		free_parser.c \
 		logger.c \
 		supervisor_ctrl.c \
-		supervisor_ctrl_utils.c
+		supervisor_ctrl_utils.c \
+		supervisor_ctrl_cmds.c
 
 OBJS = $(addprefix $(OBJ_DIR)/, $(SRCS:.c=.o))
 

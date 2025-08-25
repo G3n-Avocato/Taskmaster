@@ -3,21 +3,15 @@ Note Laura :
 
 Fait :
 
-/!\ Log in Supervisor.log ne marche plus /!\ a voir (-> ajouter logger info au program)
-Remttre log "supervisor.c" en place pour les mallocs etc ..
-changer system loop avec une boucle pour all 
-
-* logger supervisord + * tester les sorties du logger 
-* ALL Revoir le main et le system de loop a voir avec le controlleur 
------------------> yes ajouter childhandler system 
-
-* signal ctrl+/ ctrl+quit
-* ajouter partie controller
+-> boucle fct pour trouver les groupname ou des pos id precis
+* fct pour chaque commande - start - restart - stop
 
 
 En cours :
 
-* fct pour chaque commande - start - stop - reaload - status - restart 
+* fct pour chaque commande - reaload - status
+-> status alignement de merde
+-> stop double log dans supervisor.log -> booleen ctrl_cmd in waitpid pour display log
 
 A faire : 
 
@@ -26,10 +20,11 @@ A faire :
 
 * partie reload file, il faut comparer ajouter mais aussi suprrimer des process free
 -> fct de comparaison pour reload le fichier et voir si changement pour relancer ou non 
--> boucle fct pour trouver les groupname ou des pos id precis
 
+* passer ctrl en anglais
 
 * ajouter loger fct in logger.h
+
 * revoir stdout et stderr des processus -> en cas de max output il faut pouvoir gerer ca 
 -> stdout -> creer old -> copier dans old -> efface stdout 
 -> parent verif max fichier stdout
@@ -41,10 +36,8 @@ TEST A FAIRE :
 * launching processes that generate lots of output
 * tester avec PLUS DE configs erreurs 
 
+
 etape : parsing config bon -> creation du fichier de log -> demarrage -> ?
-
-
-
 
 exemple_1:
 

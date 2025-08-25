@@ -23,13 +23,13 @@ void add_history(const char *cmd) {
     }
 }
 
-void call_start_cmd(char **cmd)
+void call_start_cmd(char **cmd, t_superMap** superMap, t_process_para* para)
 {
     if (!cmd || ft_pointer_tab_len(cmd) < 2)
         return;
     if (ft_pointer_tab_len(cmd) == 2 && strcmp(cmd[1],"all") == 0)
     {
-        printf("→ Start all Process !\n");
+        find_all_proc_start(superMap, para);
     }
     else
     {
@@ -69,13 +69,13 @@ void call_start_cmd(char **cmd)
                 }
                 if (name)
                 {
-                    printf("→ Start Name %s:%s !\n",group,name);
+                    find_name_proc_start(superMap, para, group, name);
                     free(group);
                     free(name);
                 }
                 else if (group)
                 {
-                    printf("→ Start Group %s: !\n",group);
+                    find_group_proc_start(superMap, para, group);
                     free(group);
                 }
             }
@@ -84,13 +84,13 @@ void call_start_cmd(char **cmd)
     }
 }
 
-void call_stop_cmd(char **cmd)
+void call_stop_cmd(char **cmd, t_superMap** superMap)
 {
     if (!cmd || ft_pointer_tab_len(cmd) < 2)
         return;
     if (ft_pointer_tab_len(cmd) == 2 && strcmp(cmd[1],"all") == 0)
     {
-        printf("→ Stop all Process !\n");
+        find_all_proc_stop(superMap);
     }
     else
     {
@@ -130,13 +130,13 @@ void call_stop_cmd(char **cmd)
                 }
                 if (name)
                 {
-                    printf("→ Stop Name %s:%s !\n",group,name);
+                    find_name_proc_stop(superMap, group, name);
                     free(group);
                     free(name);
                 }
                 else if (group)
                 {
-                    printf("→ Stop Group %s: !\n",group);
+                    find_group_proc_stop(superMap, group);
                     free(group);
                 }
             }
@@ -145,13 +145,13 @@ void call_stop_cmd(char **cmd)
     }
 }
 
-void call_restart_cmd(char **cmd)
+void call_restart_cmd(char **cmd, t_superMap** superMap, t_process_para* para)
 {
     if (!cmd || ft_pointer_tab_len(cmd) < 2)
         return;
     if (ft_pointer_tab_len(cmd) == 2 && strcmp(cmd[1],"all") == 0)
     {
-        printf("→ Restart all Process !\n");
+        find_all_proc_restart(superMap, para);
     }
     else
     {
@@ -191,13 +191,13 @@ void call_restart_cmd(char **cmd)
                 }
                 if (name)
                 {
-                    printf("→ Restart Name %s:%s !\n",group,name);
+                    find_name_proc_restart(superMap, para, group, name);
                     free(group);
                     free(name);
                 }
                 else if (group)
                 {
-                    printf("→ Restart Group %s: !\n",group);
+                    find_group_proc_restart(superMap, para, group);
                     free(group);
                 }
             }
@@ -267,13 +267,13 @@ void call_reload_cmd(char **cmd)
     }
 }
 
-void call_status_cmd(char **cmd)
+void call_status_cmd(char **cmd, t_superMap** superMap)
 {
     if (!cmd || ft_pointer_tab_len(cmd) < 2)
         return;
     if (ft_pointer_tab_len(cmd) == 2 && strcmp(cmd[1],"all") == 0)
     {
-        printf("→ Status all Process !\n");
+        find_all_proc_status(superMap);
     }
     else
     {
@@ -313,13 +313,13 @@ void call_status_cmd(char **cmd)
                 }
                 if (name)
                 {
-                    printf("→ Status Name %s:%s !\n",group,name);
+                    find_name_proc_status(superMap, group, name);
                     free(group);
                     free(name);
                 }
                 else if (group)
                 {
-                    printf("→ Status Group %s: !\n",group);
+                    find_group_proc_status(superMap, group);
                     free(group);
                 }
             }
@@ -329,24 +329,24 @@ void call_status_cmd(char **cmd)
 }
 
 // Traitement de la commande
-void process_command(const char *cmd) {
+void process_command(const char *cmd, t_superMap** superMap, t_process_para* para) {
     printf("\nTraitement de la commande : %s\n", cmd);
     char ** split_cmd = split(cmd,' ');
     if (!split_cmd)
         return;
     if (strcmp(split_cmd[0], "start") == 0) {
-        call_start_cmd(split_cmd);
+        call_start_cmd(split_cmd, superMap, para);
     } else if (strcmp(split_cmd[0], "quit") == 0) {
         printf("→ Demande d'arrêt.\n");
         running = 0;
     }  else if (strcmp(split_cmd[0], "stop") == 0) {
-        call_stop_cmd(split_cmd);
+        call_stop_cmd(split_cmd, superMap);
     }  else if (strcmp(split_cmd[0], "reload") == 0) {
         call_reload_cmd(split_cmd);
     }  else if (strcmp(split_cmd[0], "status") == 0) {
-        call_status_cmd(split_cmd);
+        call_status_cmd(split_cmd, superMap);
     }  else if (strcmp(split_cmd[0], "restart") == 0) {
-        call_restart_cmd(split_cmd);
+        call_restart_cmd(split_cmd, superMap, para);
     } else {
         printf("→ Commande inconnue.\n");
     }

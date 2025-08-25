@@ -118,10 +118,8 @@ bool    stopProcess(t_procs* proc) {
         if (!killProcess(proc))
             return false ;
     }
-    else {
-        //printf("--------------> stopsignal = %s\n", signal_int_tostring(proc->config->stopSignal));
+    else
         stopped_process_signal_logger(proc->config->name, proc->id, proc->config->stopSignal);
-    }
 
     proc->state = STOPPED;
 
