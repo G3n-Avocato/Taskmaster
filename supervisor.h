@@ -11,12 +11,12 @@ extern volatile sig_atomic_t    sigchld_received;
 
 // supervisor.c
 bool    init_supervisor_processMap(t_process_para* para, t_superMap** superMap);
-bool    autostart_boot(t_superMap** superMap, t_process_para* para, int i);
-bool    main_loop(t_superMap** superMap, t_process_para* para);
-void    command_ctrl(t_superMap** superMap, t_process_para* para);
+bool    autostart_boot(t_superMap** superMap, t_process_para* para, int i, t_ctrl_cmds* ctrl);
+bool    main_loop(t_superMap** superMap, t_process_para* para, t_ctrl_cmds* ctrl);
+void    command_ctrl(t_superMap** superMap, t_process_para* para, t_ctrl_cmds* ctrl);
 bool    state_Running(t_superMap** superMap, int i);
-bool    startRetries_loop(t_superMap** superMap, t_process_para *para, int i);
-bool    autoRestart_loop(t_superMap** superMap, t_process_para *para, int i);
+bool    startRetries_loop(t_superMap** superMap, t_process_para* para, int i, t_ctrl_cmds* ctrl);
+bool    autoRestart_loop(t_superMap** superMap, t_process_para* para, int i, t_ctrl_cmds* ctrl);
 bool    timeCalcul_Restart(t_superMap** superMap, int i);
 
 

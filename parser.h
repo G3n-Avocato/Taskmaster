@@ -51,6 +51,7 @@ typedef struct s_config {
 typedef struct s_process_para {
     t_config*       config;
     unsigned int    count;
+    char**          file_name;
 } t_process_para;
 
 // STATE for pos in YAML file config
@@ -83,6 +84,7 @@ bool    parser_file_yaml(char *file, t_process_para* para);
 bool    int_parser(char* str, int *out);
 bool    bool_parser(char *str, bool* out);
 bool    syntax_error_file_config(yaml_parser_t* parser, yaml_event_t* event, FILE* fd);
+bool    init_para_null(t_process_para* para);
 
 // parser_config.c //
 bool    parsing_name(t_process_para* para, char* val);

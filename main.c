@@ -66,12 +66,17 @@ int main(int argc, char **argv) {
     if (!parser_name_file(argv, argc))
         return 1;
 
-    para = malloc(sizeof(t_process_para) * 1);
+    para = malloc(sizeof(t_process_para) * 2);
     if (!para) {
         fprintf(stderr, "Error parser : (malloc) %s\n", strerror(errno));
         return 1;
     }
-    if (!parser_file_yaml(argv[1], para)) {
+    para[0].file_name = argv;
+    if (!init_para_null(&para[1])) {
+        free(para);
+        return 1;
+    }
+    if (!parser_file_yaml(argv[1], &para[0])) {
         free_process_para(para);
         return 1;
     }
@@ -110,7 +115,9 @@ int main(int argc, char **argv) {
     //}
     ///////////////////////////////////////////////////////
 
-    pthread_t tid;
+    pthread_t   tid;
+    t_ctrl_cmds ctrl;
+
     if (pthread_create(&tid, NULL, reader_thread, NULL) != 0) {
         perror("pthread_create");
         free_exit_para(para);
@@ -127,7 +134,7 @@ int main(int argc, char **argv) {
         free_ctrl(tid);
         return 1;
     }
-    if (!init_supervisor_processMap(para, &superMap)) {
+    if (!init_supervisor_processMap(&para[0], &superMap)) {
         free_exit_supervisor(&superMap, para, tid);
         return 1 ;
     }
@@ -138,7 +145,7 @@ int main(int argc, char **argv) {
         free_exit_supervisor(&superMap, para, tid);
         return 1 ;
     }
-    if (!main_loop(&superMap, para)) {
+    if (!main_loop(&superMap, para, &ctrl)) {
         free_exit_supervisor(&superMap, para, tid);
         return 1 ;
     }

@@ -2,24 +2,20 @@ Note Laura :
 
 
 Fait :
-
--> boucle fct pour trouver les groupname ou des pos id precis
-* fct pour chaque commande - start - restart - stop
-
+-> fct de comparaison pour reload le fichier et voir si changement pour relancer ou non 
 
 En cours :
 
-* fct pour chaque commande - reaload - status
--> status alignement de merde
--> stop double log dans supervisor.log -> booleen ctrl_cmd in waitpid pour display log
+
+* reload
+* partie reload file, il faut comparer ajouter mais aussi suprrimer des process free 
+
 
 A faire : 
 
+* ctrl -> probleme prompt -> mutex
 
-* refaire parsing pour reload case avec logger (adapter les fct et les sortie en cas d'erreur config supervisor ne s'arrete pas)
-
-* partie reload file, il faut comparer ajouter mais aussi suprrimer des process free
--> fct de comparaison pour reload le fichier et voir si changement pour relancer ou non 
+* stop double log d'exit dans supervisor.log -> booleen ctrl_cmd in waitpid pour display log (a voir si necessaire)
 
 * passer ctrl en anglais
 
@@ -29,12 +25,19 @@ A faire :
 -> stdout -> creer old -> copier dans old -> efface stdout 
 -> parent verif max fichier stdout
 
+* petite verif a faire
+-> parser variable has_cmd non utiliser 
+-> fct autoboot in loop verifier si pas double pid avec start et restart cmd
+
 
 TEST A FAIRE :
 * manually killing supervised processes, 
 * trying to launch processes that never start correctly, 
 * launching processes that generate lots of output
 * tester avec PLUS DE configs erreurs 
+-> verifier sortie d'erreur de lancement dans le terminal pour start et restart 
+
+
 
 
 etape : parsing config bon -> creation du fichier de log -> demarrage -> ?

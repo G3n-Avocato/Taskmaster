@@ -36,8 +36,9 @@ bool    init_process_struct(t_procs* proc, t_config* conf, unsigned int j) {
     proc->count_restart = 0;
     proc->start_restart = 0;
     proc->boot_auto = false;
-    // avoir avec reload
-    proc->ctrl_cmd = false;
+
+    proc->ctrl_cmd_start = false;
+    proc->ctrl_cmd_stop = false;
 
     return true ;
 }

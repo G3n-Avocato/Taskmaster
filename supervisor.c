@@ -31,11 +31,16 @@ bool    init_supervisor_processMap(t_process_para* para, t_superMap** superMap) 
     return true ;
 }
 
-bool    main_loop(t_superMap** superMap, t_process_para* para) {
+bool    main_loop(t_superMap** superMap, t_process_para* para, t_ctrl_cmds* ctrl) {
     
     struct timespec wait_for = {0};
     wait_for.tv_sec = 0;
     wait_for.tv_nsec = 100 * 1000000L;
+
+    ctrl->split_cmd = NULL;
+    ctrl->group = NULL;
+    ctrl->name = NULL;
+    ctrl->tab_len = 0;
 
     while (running) {
 
@@ -45,29 +50,26 @@ bool    main_loop(t_superMap** superMap, t_process_para* para) {
         }
 
         if (cmd_ready)
-            command_ctrl(superMap, para);
+            command_ctrl(superMap, para, ctrl);
         
         for (int i = 0; i < g_processCount; i++) {
             
-            if (!autostart_boot(superMap, para, i))
+            if (!autostart_boot(superMap, para, i, ctrl))
                 return false ;
             
             if (!state_Running(superMap, i)) {
                 return false ;
             }
-            if (!(*superMap)[i].proc.ctrl_cmd) {
-                if (!startRetries_loop(superMap, para, i))
+            if ((*superMap)[i].proc.ctrl_cmd_stop == false) {
+                if (!startRetries_loop(superMap, para, i, ctrl))
                     return false ;
             }
             
-            if (!(*superMap)[i].proc.ctrl_cmd) {
-                if (!autoRestart_loop(superMap, para, i))
+            if ((*superMap)[i].proc.ctrl_cmd_stop == false) {
+                if (!autoRestart_loop(superMap, para, i, ctrl))
                     return false ;
             }
             //printf("%d - %s - %d -----------> %s\n\n", (*superMap)[i].proc.processus, (*superMap)[i].name, (*superMap)[i].id, enumtoString((*superMap)[i].proc.state));
-    
-            //if (!test_stopProcess(superMap, i))
-            //    return false ;
 
         }
         nanosleep(&wait_for, NULL);
@@ -75,7 +77,7 @@ bool    main_loop(t_superMap** superMap, t_process_para* para) {
     return true ;
 }
 
-void    command_ctrl(t_superMap** superMap, t_process_para* para) {
+void    command_ctrl(t_superMap** superMap, t_process_para* para, t_ctrl_cmds* ctrl) {
     
     char tmp[MAX_CMD];
     
@@ -83,20 +85,21 @@ void    command_ctrl(t_superMap** superMap, t_process_para* para) {
     tmp[MAX_CMD - 1] = '\0';
     
     cmd_ready = 0;
-    process_command(tmp, superMap, para);
+    process_command(tmp, superMap, para, ctrl);
     if (running) {
         printf("> ");
         fflush(stdout);
     }
 }
 
-bool    autostart_boot(t_superMap** superMap, t_process_para* para, int i) {
+bool    autostart_boot(t_superMap** superMap, t_process_para* para, int i, t_ctrl_cmds* ctrl) {
 
     if (!(*superMap)[i].proc.boot_auto && (*superMap)[i].proc.config->autoStart) {
-        if (!startProcess(&(*superMap)[i].proc, superMap, para))
+        if (!startProcess(&(*superMap)[i].proc, superMap, para, ctrl))
             return false ;
         (*superMap)[i].proc.boot_auto = true;
-        (*superMap)[i].proc.ctrl_cmd = false; // avoir avec reaload
+        fprintf(stderr, "test1\n");
+        fflush(stderr);
     }
     return true ;
 }
@@ -112,12 +115,12 @@ bool    state_Running(t_superMap** superMap, int i) {
         if (diff_time >= (*superMap)[i].proc.config->startTime) {
             
             (*superMap)[i].proc.state = RUNNING;
-            (*superMap)[i].proc.run_reached = true ;
+            (*superMap)[i].proc.run_reached = true;
             running_process_logger((*superMap)[i].name, (*superMap)[i].id - 1, (*superMap)[i].proc.config->startTime);
-            if ((*superMap)[i].proc.ctrl_cmd) {
+            if ((*superMap)[i].proc.ctrl_cmd_start) {
                 fprintf(stdout, "%s_%d: started\n", (*superMap)[i].name, ((*superMap)[i].id - 1));
                 fflush(stdout);
-                (*superMap)[i].proc.ctrl_cmd = false;
+                (*superMap)[i].proc.ctrl_cmd_start = false;
             }
         }
     }
@@ -125,7 +128,7 @@ bool    state_Running(t_superMap** superMap, int i) {
     return true ;
 }
 
-bool    startRetries_loop(t_superMap** superMap, t_process_para *para, int i) {
+bool    startRetries_loop(t_superMap** superMap, t_process_para* para, int i, t_ctrl_cmds* ctrl) {
 
     ProcessStatus   p_state = (*superMap)[i].proc.state;
         
@@ -135,13 +138,15 @@ bool    startRetries_loop(t_superMap** superMap, t_process_para *para, int i) {
         
             (*superMap)[i].proc.state = BACKOFF;
             (*superMap)[i].proc.count_retries++;
-            if (!startProcess(&(*superMap)[i].proc, superMap, para))
+            if (!startProcess(&(*superMap)[i].proc, superMap, para, ctrl))
                 return false ;
+            fprintf(stderr, "test2\n");
+            fflush(stderr);
         }
         else if ((*superMap)[i].proc.config->startRetries == (*superMap)[i].proc.count_retries && p_state != FATAL) {
             fatal_logger((*superMap)[i].name, (*superMap)[i].id - 1);
             (*superMap)[i].proc.state = FATAL;
-            if ((*superMap)[i].proc.ctrl_cmd) {
+            if ((*superMap)[i].proc.ctrl_cmd_start) {
                 fprintf(stderr, "%s_%d: ERROR (abnormal termination)\n", (*superMap)[i].name, (*superMap)[i].id - 1);
                 fflush(stderr);
             }
@@ -152,7 +157,7 @@ bool    startRetries_loop(t_superMap** superMap, t_process_para *para, int i) {
     return true ;
 }
 
-bool    autoRestart_loop(t_superMap** superMap, t_process_para *para, int i) {
+bool    autoRestart_loop(t_superMap** superMap, t_process_para* para, int i, t_ctrl_cmds* ctrl) {
 
     ProcessStatus   p_state = (*superMap)[i].proc.state;
     int             st_restart = (*superMap)[i].proc.config->autoRestart;
@@ -165,8 +170,10 @@ bool    autoRestart_loop(t_superMap** superMap, t_process_para *para, int i) {
                 return true ;
 
             (*superMap)[i].proc.count_restart++;
-            if (!startProcess(&(*superMap)[i].proc, superMap, para))
+            if (!startProcess(&(*superMap)[i].proc, superMap, para, ctrl))
                 return false ;
+            fprintf(stderr, "test3\n");
+            fflush(stderr);
         }
     }
 

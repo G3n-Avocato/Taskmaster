@@ -23,27 +23,27 @@ void add_history(const char *cmd) {
     }
 }
 
-void call_start_cmd(char **cmd, t_superMap** superMap, t_process_para* para)
+void call_start_cmd(t_ctrl_cmds* ctrl, t_superMap** superMap, t_process_para* para)
 {
-    if (!cmd || ft_pointer_tab_len(cmd) < 2)
+    if (!ctrl->split_cmd || ft_pointer_tab_len(ctrl->split_cmd) < 2)
         return;
-    if (ft_pointer_tab_len(cmd) == 2 && strcmp(cmd[1],"all") == 0)
+    if (ft_pointer_tab_len(ctrl->split_cmd) == 2 && strcmp(ctrl->split_cmd[1],"all") == 0)
     {
-        find_all_proc_start(superMap, para);
+        find_all_proc_start(superMap, para, ctrl);
     }
     else
     {
         int i = 1;
-        while (cmd[i])
+        while (ctrl->split_cmd[i])
         {
             int j = 0;
             int cursor = 0;
-            char *group = NULL;
-            char *name = NULL;
-            char *arg = cmd[i];
+            ctrl->group = NULL;
+            ctrl->name = NULL;
+            char *arg = ctrl->split_cmd[i];
             if (arg[0] == ':')
             {
-                printf("→ Start Error name arg : %s\n",cmd[i]);
+                printf("→ Start Error name arg : %s\n",ctrl->split_cmd[i]);
             }
             else
             {
@@ -51,32 +51,35 @@ void call_start_cmd(char **cmd, t_superMap** superMap, t_process_para* para)
                 {
                     if (arg[j] == ':')
                     {
-                        if (group)
+                        if (ctrl->group)
                         {
-                            free(group);
-                            group = NULL;
-                            printf("→ Start Error name arg : %s\n",cmd[i]);
+                            free(ctrl->group);
+                            ctrl->group = NULL;
+                            printf("→ Start Error name arg : %s\n",ctrl->split_cmd[i]);
                             break;
                         }
-                        group = ft_substr(cmd[i], cursor, j-cursor);
+                        ctrl->group = ft_substr(ctrl->split_cmd[i], cursor, j-cursor);
                         cursor = j+1;
                     }
                     j++;
                 }
-                if (group && cursor != j)
+                if (ctrl->group && cursor != j)
                 {
-                    name = ft_substr(cmd[i], cursor, j-cursor);
+                    ctrl->name = ft_substr(ctrl->split_cmd[i], cursor, j-cursor);
                 }
-                if (name)
+                if (ctrl->name)
                 {
-                    find_name_proc_start(superMap, para, group, name);
-                    free(group);
-                    free(name);
+                    find_name_proc_start(superMap, para, ctrl);
+                    free(ctrl->group);
+                    ctrl->group = NULL;
+                    free(ctrl->name);
+                    ctrl->name = NULL;
                 }
-                else if (group)
+                else if (ctrl->group)
                 {
-                    find_group_proc_start(superMap, para, group);
-                    free(group);
+                    find_group_proc_start(superMap, para, ctrl);
+                    free(ctrl->group);
+                    ctrl->group = NULL;
                 }
             }
             i++;
@@ -84,27 +87,27 @@ void call_start_cmd(char **cmd, t_superMap** superMap, t_process_para* para)
     }
 }
 
-void call_stop_cmd(char **cmd, t_superMap** superMap)
+void call_stop_cmd(t_ctrl_cmds* ctrl, t_superMap** superMap)
 {
-    if (!cmd || ft_pointer_tab_len(cmd) < 2)
+    if (!ctrl->split_cmd || ft_pointer_tab_len(ctrl->split_cmd) < 2)
         return;
-    if (ft_pointer_tab_len(cmd) == 2 && strcmp(cmd[1],"all") == 0)
+    if (ft_pointer_tab_len(ctrl->split_cmd) == 2 && strcmp(ctrl->split_cmd[1],"all") == 0)
     {
         find_all_proc_stop(superMap);
     }
     else
     {
         int i = 1;
-        while (cmd[i])
+        while (ctrl->split_cmd[i])
         {
             int j = 0;
             int cursor = 0;
-            char *group = NULL;
-            char *name = NULL;
-            char *arg = cmd[i];
+            ctrl->group = NULL;
+            ctrl->name = NULL;
+            char *arg = ctrl->split_cmd[i];
             if (arg[0] == ':')
             {
-                printf("→ Stop Error name arg : %s\n",cmd[i]);
+                printf("→ Stop Error name arg : %s\n",ctrl->split_cmd[i]);
             }
             else
             {
@@ -112,32 +115,35 @@ void call_stop_cmd(char **cmd, t_superMap** superMap)
                 {
                     if (arg[j] == ':')
                     {
-                        if (group)
+                        if (ctrl->group)
                         {
-                            free(group);
-                            group = NULL;
-                            printf("→ Stop Error name arg : %s\n",cmd[i]);
+                            free(ctrl->group);
+                            ctrl->group = NULL;
+                            printf("→ Stop Error name arg : %s\n",ctrl->split_cmd[i]);
                             break;
                         }
-                        group = ft_substr(cmd[i], cursor, j-cursor);
+                        ctrl->group = ft_substr(ctrl->split_cmd[i], cursor, j-cursor);
                         cursor = j+1;
                     }
                     j++;
                 }
-                if (group && cursor != j)
+                if (ctrl->group && cursor != j)
                 {
-                    name = ft_substr(cmd[i], cursor, j-cursor);
+                    ctrl->name = ft_substr(ctrl->split_cmd[i], cursor, j-cursor);
                 }
-                if (name)
+                if (ctrl->name)
                 {
-                    find_name_proc_stop(superMap, group, name);
-                    free(group);
-                    free(name);
+                    find_name_proc_stop(superMap, ctrl);
+                    free(ctrl->group);
+                    ctrl->group = NULL;
+                    free(ctrl->name);
+                    ctrl->name = NULL;
                 }
-                else if (group)
+                else if (ctrl->group)
                 {
-                    find_group_proc_stop(superMap, group);
-                    free(group);
+                    find_group_proc_stop(superMap, ctrl);
+                    free(ctrl->group);
+                    ctrl->group = NULL;
                 }
             }
             i++;
@@ -145,27 +151,27 @@ void call_stop_cmd(char **cmd, t_superMap** superMap)
     }
 }
 
-void call_restart_cmd(char **cmd, t_superMap** superMap, t_process_para* para)
+void call_restart_cmd(t_ctrl_cmds* ctrl, t_superMap** superMap, t_process_para* para)
 {
-    if (!cmd || ft_pointer_tab_len(cmd) < 2)
+    if (!ctrl->split_cmd || ft_pointer_tab_len(ctrl->split_cmd) < 2)
         return;
-    if (ft_pointer_tab_len(cmd) == 2 && strcmp(cmd[1],"all") == 0)
+    if (ft_pointer_tab_len(ctrl->split_cmd) == 2 && strcmp(ctrl->split_cmd[1],"all") == 0)
     {
-        find_all_proc_restart(superMap, para);
+        find_all_proc_restart(superMap, para, ctrl);
     }
     else
     {
         int i = 1;
-        while (cmd[i])
+        while (ctrl->split_cmd[i])
         {
             int j = 0;
             int cursor = 0;
-            char *group = NULL;
-            char *name = NULL;
-            char *arg = cmd[i];
+            ctrl->group = NULL;
+            ctrl->name = NULL;
+            char *arg = ctrl->split_cmd[i];
             if (arg[0] == ':')
             {
-                printf("→ Restart Error name arg : %s\n",cmd[i]);
+                printf("→ Restart Error name arg : %s\n",ctrl->split_cmd[i]);
             }
             else
             {
@@ -173,32 +179,35 @@ void call_restart_cmd(char **cmd, t_superMap** superMap, t_process_para* para)
                 {
                     if (arg[j] == ':')
                     {
-                        if (group)
+                        if (ctrl->group)
                         {
-                            free(group);
-                            group = NULL;
-                            printf("→ Restart Error name arg : %s\n",cmd[i]);
+                            free(ctrl->group);
+                            ctrl->group = NULL;
+                            printf("→ Restart Error name arg : %s\n",ctrl->split_cmd[i]);
                             break;
                         }
-                        group = ft_substr(cmd[i], cursor, j-cursor);
+                        ctrl->group = ft_substr(ctrl->split_cmd[i], cursor, j-cursor);
                         cursor = j+1;
                     }
                     j++;
                 }
-                if (group && cursor != j)
+                if (ctrl->group && cursor != j)
                 {
-                    name = ft_substr(cmd[i], cursor, j-cursor);
+                    ctrl->name = ft_substr(ctrl->split_cmd[i], cursor, j-cursor);
                 }
-                if (name)
+                if (ctrl->name)
                 {
-                    find_name_proc_restart(superMap, para, group, name);
-                    free(group);
-                    free(name);
+                    find_name_proc_restart(superMap, para, ctrl);
+                    free(ctrl->group);
+                    ctrl->group = NULL;
+                    free(ctrl->name);
+                    ctrl->name = NULL;
                 }
-                else if (group)
+                else if (ctrl->group)
                 {
-                    find_group_proc_restart(superMap, para, group);
-                    free(group);
+                    find_group_proc_restart(superMap, para, ctrl);
+                    free(ctrl->group);
+                    ctrl->group = NULL;
                 }
             }
             i++;
@@ -206,27 +215,27 @@ void call_restart_cmd(char **cmd, t_superMap** superMap, t_process_para* para)
     }
 }
 
-void call_reload_cmd(char **cmd)
+void call_reload_cmd(t_ctrl_cmds* ctrl, t_superMap** superMap, t_process_para* para)
 {
-    if (!cmd || ft_pointer_tab_len(cmd) < 2)
+    if (!ctrl->split_cmd || ft_pointer_tab_len(ctrl->split_cmd) < 2)
         return;
-    if (ft_pointer_tab_len(cmd) == 2 && strcmp(cmd[1],"all") == 0)
+    if (ft_pointer_tab_len(ctrl->split_cmd) == 2 && strcmp(ctrl->split_cmd[1],"all") == 0)
     {
-        printf("→ Reload all Process !\n");
+        reload_cmd(superMap, para, ctrl);
     }
     else
     {
         int i = 1;
-        while (cmd[i])
+        while (ctrl->split_cmd[i])
         {
             int j = 0;
             int cursor = 0;
-            char *group = NULL;
-            char *name = NULL;
-            char *arg = cmd[i];
+            ctrl->group = NULL;
+            ctrl->name = NULL;
+            char *arg = ctrl->split_cmd[i];
             if (arg[0] == ':')
             {
-                printf("→ Reload Error name arg : %s\n",cmd[i]);
+                printf("→ Reload Error name arg : %s\n",ctrl->split_cmd[i]);
             }
             else
             {
@@ -234,32 +243,35 @@ void call_reload_cmd(char **cmd)
                 {
                     if (arg[j] == ':')
                     {
-                        if (group)
+                        if (ctrl->group)
                         {
-                            free(group);
-                            group = NULL;
-                            printf("→ Reload Error name arg : %s\n",cmd[i]);
+                            free(ctrl->group);
+                            ctrl->group = NULL;
+                            printf("→ Reload Error name arg : %s\n",ctrl->split_cmd[i]);
                             break;
                         }
-                        group = ft_substr(cmd[i], cursor, j-cursor);
+                        ctrl->group = ft_substr(ctrl->split_cmd[i], cursor, j-cursor);
                         cursor = j+1;
                     }
                     j++;
                 }
-                if (group && cursor != j)
+                if (ctrl->group && cursor != j)
                 {
-                    name = ft_substr(cmd[i], cursor, j-cursor);
+                    ctrl->name = ft_substr(ctrl->split_cmd[i], cursor, j-cursor);
                 }
-                if (name)
+                if (ctrl->name)
                 {
-                    printf("→ Reload Name %s:%s !\n",group,name);
-                    free(group);
-                    free(name);
+                    //printf("→ Reload Name %s:%s !\n",group,name);
+                    free(ctrl->group);
+                    ctrl->group = NULL;
+                    free(ctrl->name);
+                    ctrl->name = NULL;
                 }
-                else if (group)
+                else if (ctrl->group)
                 {
-                    printf("→ Reload Group %s: !\n",group);
-                    free(group);
+                    //printf("→ Reload Group %s: !\n",group);
+                    free(ctrl->group);
+                    ctrl->group = NULL;
                 }
             }
             i++;
@@ -267,27 +279,27 @@ void call_reload_cmd(char **cmd)
     }
 }
 
-void call_status_cmd(char **cmd, t_superMap** superMap)
+void call_status_cmd(t_ctrl_cmds* ctrl, t_superMap** superMap)
 {
-    if (!cmd || ft_pointer_tab_len(cmd) < 2)
+    if (!ctrl->split_cmd || ft_pointer_tab_len(ctrl->split_cmd) < 2)
         return;
-    if (ft_pointer_tab_len(cmd) == 2 && strcmp(cmd[1],"all") == 0)
+    if (ft_pointer_tab_len(ctrl->split_cmd) == 2 && strcmp(ctrl->split_cmd[1],"all") == 0)
     {
         find_all_proc_status(superMap);
     }
     else
     {
         int i = 1;
-        while (cmd[i])
+        while (ctrl->split_cmd[i])
         {
             int j = 0;
             int cursor = 0;
-            char *group = NULL;
-            char *name = NULL;
-            char *arg = cmd[i];
+            ctrl->group = NULL;
+            ctrl->name = NULL;
+            char *arg = ctrl->split_cmd[i];
             if (arg[0] == ':')
             {
-                printf("→ Status Error name arg : %s\n",cmd[i]);
+                printf("→ Status Error name arg : %s\n",ctrl->split_cmd[i]);
             }
             else
             {
@@ -295,32 +307,35 @@ void call_status_cmd(char **cmd, t_superMap** superMap)
                 {
                     if (arg[j] == ':')
                     {
-                        if (group)
+                        if (ctrl->group)
                         {
-                            free(group);
-                            group = NULL;
-                            printf("→ Status Error name arg : %s\n",cmd[i]);
+                            free(ctrl->group);
+                            ctrl->group = NULL;
+                            printf("→ Status Error name arg : %s\n",ctrl->split_cmd[i]);
                             break;
                         }
-                        group = ft_substr(cmd[i], cursor, j-cursor);
+                        ctrl->group = ft_substr(ctrl->split_cmd[i], cursor, j-cursor);
                         cursor = j+1;
                     }
                     j++;
                 }
-                if (group && cursor != j)
+                if (ctrl->group && cursor != j)
                 {
-                    name = ft_substr(cmd[i], cursor, j-cursor);
+                    ctrl->name = ft_substr(ctrl->split_cmd[i], cursor, j-cursor);
                 }
-                if (name)
+                if (ctrl->name)
                 {
-                    find_name_proc_status(superMap, group, name);
-                    free(group);
-                    free(name);
+                    find_name_proc_status(superMap, ctrl);
+                    free(ctrl->group); 
+                    ctrl->group = NULL;
+                    free(ctrl->name);
+                    ctrl->name = NULL;
                 }
-                else if (group)
+                else if (ctrl->group)
                 {
-                    find_group_proc_status(superMap, group);
-                    free(group);
+                    find_group_proc_status(superMap, ctrl);
+                    free(ctrl->group);
+                    ctrl->group = NULL;
                 }
             }
             i++;
@@ -329,30 +344,34 @@ void call_status_cmd(char **cmd, t_superMap** superMap)
 }
 
 // Traitement de la commande
-void process_command(const char *cmd, t_superMap** superMap, t_process_para* para) {
+void process_command(const char *cmd, t_superMap** superMap, t_process_para* para, t_ctrl_cmds* ctrl) {
     printf("\nTraitement de la commande : %s\n", cmd);
-    char ** split_cmd = split(cmd,' ');
-    if (!split_cmd)
+    ctrl->split_cmd = split(cmd,' ');
+    if (!ctrl->split_cmd)
         return;
-    if (strcmp(split_cmd[0], "start") == 0) {
-        call_start_cmd(split_cmd, superMap, para);
-    } else if (strcmp(split_cmd[0], "quit") == 0) {
+    ctrl->tab_len = ft_pointer_tab_len(ctrl->split_cmd);
+    if (strcmp(ctrl->split_cmd[0], "start") == 0) {
+        call_start_cmd(ctrl, superMap, para);
+    } else if (strcmp(ctrl->split_cmd[0], "quit") == 0) {
         printf("→ Demande d'arrêt.\n");
         running = 0;
-    }  else if (strcmp(split_cmd[0], "stop") == 0) {
-        call_stop_cmd(split_cmd, superMap);
-    }  else if (strcmp(split_cmd[0], "reload") == 0) {
-        call_reload_cmd(split_cmd);
-    }  else if (strcmp(split_cmd[0], "status") == 0) {
-        call_status_cmd(split_cmd, superMap);
-    }  else if (strcmp(split_cmd[0], "restart") == 0) {
-        call_restart_cmd(split_cmd, superMap, para);
+    }  else if (strcmp(ctrl->split_cmd[0], "stop") == 0) {
+        call_stop_cmd(ctrl, superMap);
+    }  else if (strcmp(ctrl->split_cmd[0], "reload") == 0) {
+        call_reload_cmd(ctrl, superMap, para);
+    }  else if (strcmp(ctrl->split_cmd[0], "status") == 0) {
+        call_status_cmd(ctrl, superMap);
+    }  else if (strcmp(ctrl->split_cmd[0], "restart") == 0) {
+        call_restart_cmd(ctrl, superMap, para);
     } else {
         printf("→ Commande inconnue.\n");
     }
-    for (int i = 0; split_cmd[i];i++)
-        free (split_cmd[i]);
-    free (split_cmd);
+    for (int i = 0; ctrl->split_cmd[i];i++) {
+        free (ctrl->split_cmd[i]);
+        ctrl->split_cmd[i] = NULL;
+    }
+    free (ctrl->split_cmd);
+    ctrl->split_cmd = NULL; 
 }
 
 void *reader_thread(void *arg) {

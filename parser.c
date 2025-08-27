@@ -204,3 +204,12 @@ bool    bool_parser(char *val, bool* out) {
     }
     return false;
 }
+
+bool    init_para_null(t_process_para* para) {
+
+    para->count = 0;
+    para->file_name = NULL;
+    para->config = NULL;
+
+    return true ;
+}

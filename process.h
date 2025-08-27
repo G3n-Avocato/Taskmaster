@@ -9,7 +9,7 @@
 #include <time.h>
 #include <sys/time.h>
 
-
+typedef struct ctrl_cmds t_ctrl_cmds;
 
 typedef enum ProcessStatus {
     STOPPED,
@@ -44,7 +44,8 @@ typedef struct s_processus {
     int             count_retries;
     time_t          start_restart;
     int             count_restart;
-    bool            ctrl_cmd;
+    bool            ctrl_cmd_start;
+    bool            ctrl_cmd_stop;
 } t_procs;
 
 typedef struct s_supervisorMap {
@@ -54,10 +55,10 @@ typedef struct s_supervisorMap {
 } t_superMap;
 
 // process.c
-bool    startProcess(t_procs* proc, t_superMap** superMap, t_process_para* para);
+bool    startProcess(t_procs* proc, t_superMap** superMap, t_process_para* para, t_ctrl_cmds* ctrl);
 void    parent_exec_proc(t_procs* proc);
 bool    waitpid_monitoring_status(t_superMap** superMap);
-void    child_exec_proc(t_procs* proc, t_superMap** superMap, t_process_para* para);
+void    child_exec_proc(t_procs* proc, t_superMap** superMap, t_process_para* para, t_ctrl_cmds* ctrl);
 bool    isProcessUp(pid_t processus);
 bool    stopProcess(t_procs* proc);
 bool    killProcess(t_procs* proc);

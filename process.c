@@ -1,6 +1,6 @@
 # include "supervisor.h"
 
-bool    startProcess(t_procs* proc, t_superMap** superMap, t_process_para* para) {
+bool    startProcess(t_procs* proc, t_superMap** superMap, t_process_para* para, t_ctrl_cmds* ctrl) {
 
     open_file_std(proc->exec);
     proc->start_run = 0;
@@ -12,7 +12,7 @@ bool    startProcess(t_procs* proc, t_superMap** superMap, t_process_para* para)
         return false ;
     }
     else if (proc->processus == 0) {
-        child_exec_proc(proc, superMap, para);
+        child_exec_proc(proc, superMap, para, ctrl);
     }
     else if (proc->processus > 0) {
         parent_exec_proc(proc);
@@ -67,8 +67,10 @@ bool    waitpid_monitoring_status(t_superMap** superMap) {
     return true ;
 }
 
-void    child_exec_proc(t_procs* proc, t_superMap** superMap, t_process_para* para) {
+void    child_exec_proc(t_procs* proc, t_superMap** superMap, t_process_para* para, t_ctrl_cmds* ctrl) {
     fclose(g_fdlog);
+    (void)ctrl;
+    
     umask(proc->config->umask);
     if (chdir(proc->config->workingDir) < 0) {
         perror("chdir");
@@ -92,7 +94,24 @@ void    child_exec_proc(t_procs* proc, t_superMap** superMap, t_process_para* pa
         fprintf(stderr, "Execve Error\n");
         free_supervisor(superMap);
         free_process_para(para);
-        //fclose(g_fdlog);
+        for (int i = 0; i < histo_size; i++)
+            free(history[i]);
+        if (ctrl->split_cmd) {
+            for (int i = 0; i < ctrl->tab_len; i++) {
+                free(ctrl->split_cmd[i]);
+                ctrl->split_cmd[i] = NULL;
+            }
+            free(ctrl->split_cmd);
+            ctrl->split_cmd = NULL;
+        }
+        if (ctrl->name) {
+            free(ctrl->name);
+            ctrl->name = NULL;
+        }
+        if (ctrl->group) {
+            free(ctrl->group);
+            ctrl->group = NULL;
+        }
         _exit(EXIT_FAILURE);
     }
 }

@@ -26,14 +26,16 @@ void    free_config(t_config *cfg) {
 }
 
 void    free_process_para(t_process_para* para) {
-    if (para && para->config) {
-        for (size_t i = 0; i < para->count; i++)
-            free_config(&para->config[i]);
-    }
-    if (para && para->config)
-        free(para->config);
-    if (para)
+    if (para) {
+        for (int i = 0; i < 2; i++) {
+            if (para[i].config != NULL) {
+                for (size_t j = 0; j < para[i].count; j++)
+                    free_config(&para[i].config[j]);
+                 free(para[i].config);
+            }
+        }
         free(para);
+    }
 }
 
 void    free_var_yaml(char **val, char **last_key) {
