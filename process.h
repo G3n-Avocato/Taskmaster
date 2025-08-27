@@ -59,6 +59,9 @@ bool    startProcess(t_procs* proc, t_superMap** superMap, t_process_para* para,
 void    parent_exec_proc(t_procs* proc);
 bool    waitpid_monitoring_status(t_superMap** superMap);
 void    child_exec_proc(t_procs* proc, t_superMap** superMap, t_process_para* para, t_ctrl_cmds* ctrl);
+void    child_exit_error_execve(t_superMap** superMap, t_process_para* para, t_ctrl_cmds* ctrl);
+void    child_close_fd(t_procs* proc);
+
 bool    isProcessUp(pid_t processus);
 bool    stopProcess(t_procs* proc);
 bool    killProcess(t_procs* proc);
@@ -71,6 +74,9 @@ bool    splitWordsArgv(char ***ptr, char *input);
 bool    buildEnvp(char ***ptr, t_config* conf);
 bool    open_file(char* std, int* fd);
 bool    open_file_std(t_execs* exec);
+bool    init_config_process(t_procs* proc, t_config* conf);
+bool    copy_exitcode_struct(t_procs* proc, t_config* conf);
+bool    copy_env_struct(t_procs* proc, t_config* conf);
 
 // process_init_utils.c
 char*   ft_itoa(int n);

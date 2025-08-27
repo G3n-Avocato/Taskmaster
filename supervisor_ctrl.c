@@ -215,70 +215,6 @@ void call_restart_cmd(t_ctrl_cmds* ctrl, t_superMap** superMap, t_process_para* 
     }
 }
 
-void call_reload_cmd(t_ctrl_cmds* ctrl, t_superMap** superMap, t_process_para* para)
-{
-    if (!ctrl->split_cmd || ft_pointer_tab_len(ctrl->split_cmd) < 2)
-        return;
-    if (ft_pointer_tab_len(ctrl->split_cmd) == 2 && strcmp(ctrl->split_cmd[1],"all") == 0)
-    {
-        reload_cmd(superMap, para, ctrl);
-    }
-    else
-    {
-        int i = 1;
-        while (ctrl->split_cmd[i])
-        {
-            int j = 0;
-            int cursor = 0;
-            ctrl->group = NULL;
-            ctrl->name = NULL;
-            char *arg = ctrl->split_cmd[i];
-            if (arg[0] == ':')
-            {
-                printf("→ Reload Error name arg : %s\n",ctrl->split_cmd[i]);
-            }
-            else
-            {
-                while (arg[j])
-                {
-                    if (arg[j] == ':')
-                    {
-                        if (ctrl->group)
-                        {
-                            free(ctrl->group);
-                            ctrl->group = NULL;
-                            printf("→ Reload Error name arg : %s\n",ctrl->split_cmd[i]);
-                            break;
-                        }
-                        ctrl->group = ft_substr(ctrl->split_cmd[i], cursor, j-cursor);
-                        cursor = j+1;
-                    }
-                    j++;
-                }
-                if (ctrl->group && cursor != j)
-                {
-                    ctrl->name = ft_substr(ctrl->split_cmd[i], cursor, j-cursor);
-                }
-                if (ctrl->name)
-                {
-                    //printf("→ Reload Name %s:%s !\n",group,name);
-                    free(ctrl->group);
-                    ctrl->group = NULL;
-                    free(ctrl->name);
-                    ctrl->name = NULL;
-                }
-                else if (ctrl->group)
-                {
-                    //printf("→ Reload Group %s: !\n",group);
-                    free(ctrl->group);
-                    ctrl->group = NULL;
-                }
-            }
-            i++;
-        }
-    }
-}
-
 void call_status_cmd(t_ctrl_cmds* ctrl, t_superMap** superMap)
 {
     if (!ctrl->split_cmd || ft_pointer_tab_len(ctrl->split_cmd) < 2)
@@ -345,7 +281,7 @@ void call_status_cmd(t_ctrl_cmds* ctrl, t_superMap** superMap)
 
 // Traitement de la commande
 void process_command(const char *cmd, t_superMap** superMap, t_process_para* para, t_ctrl_cmds* ctrl) {
-    printf("\nTraitement de la commande : %s\n", cmd);
+    printf("\nOrder processing : %s\n", cmd);
     ctrl->split_cmd = split(cmd,' ');
     if (!ctrl->split_cmd)
         return;
@@ -353,18 +289,25 @@ void process_command(const char *cmd, t_superMap** superMap, t_process_para* par
     if (strcmp(ctrl->split_cmd[0], "start") == 0) {
         call_start_cmd(ctrl, superMap, para);
     } else if (strcmp(ctrl->split_cmd[0], "quit") == 0) {
-        printf("→ Demande d'arrêt.\n");
-        running = 0;
+        if (ctrl->tab_len > 1)
+            printf("→ Invalid command.\n");
+        else {
+            printf("→ Request for stop.\n");
+            running = 0;
+        }
     }  else if (strcmp(ctrl->split_cmd[0], "stop") == 0) {
         call_stop_cmd(ctrl, superMap);
     }  else if (strcmp(ctrl->split_cmd[0], "reload") == 0) {
-        call_reload_cmd(ctrl, superMap, para);
+        if (ctrl->tab_len > 1)
+            printf("→ Invalid command.\n");
+        else
+            reload_cmd(superMap, para, ctrl);
     }  else if (strcmp(ctrl->split_cmd[0], "status") == 0) {
         call_status_cmd(ctrl, superMap);
     }  else if (strcmp(ctrl->split_cmd[0], "restart") == 0) {
         call_restart_cmd(ctrl, superMap, para);
     } else {
-        printf("→ Commande inconnue.\n");
+        printf("→ Unknown command.\n");
     }
     for (int i = 0; ctrl->split_cmd[i];i++) {
         free (ctrl->split_cmd[i]);
@@ -381,12 +324,11 @@ void *reader_thread(void *arg) {
     int pos = 0;
     int hist_cursor = histo_size;
 
-    printf("> ");
-    fflush(stdout);
-
     while (running) {
         char c;
+
         int n = read(STDIN_FILENO, &c, 1);
+        pthread_mutex_lock(&lock_read);
         if (n <= 0) continue;
 
         if (c == 3) { // Ctrl+C
@@ -441,6 +383,7 @@ void *reader_thread(void *arg) {
                 write(STDOUT_FILENO, &c, 1);
             }
         }
+        pthread_mutex_unlock(&lock_read);
     }
 
     return NULL;

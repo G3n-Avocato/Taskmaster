@@ -38,5 +38,6 @@ bool    fatal_logger(char *name, int id);
 bool    error_sigkill_logger(char *name, int id, int pid, char* msg);
 bool    error_kill_logger(char *name, int id, int pid, int sign, char* msg);
 bool    error_fork_logger(char *cmd, char *msg);
+bool    error_chdir_child(char *path, char* msg, char *name, int id);
 
 #endif

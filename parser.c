@@ -194,11 +194,11 @@ bool    bool_parser(char *val, bool* out) {
     char* _tr = "true";
     char* _fa = "false";
 
-    if (!strncmp(val, _tr, 5)) {
+    if (!strcmp(val, _tr)) {
         *out = true ;
         return true ;
     }
-    else if (!strncmp(val, _fa, 6)) {
+    else if (!strcmp(val, _fa)) {
         *out = false ;
         return true ;
     }

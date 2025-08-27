@@ -38,13 +38,13 @@ bool    comp_configFile_for_delete_config(t_superMap** superMap, t_process_para*
     unsigned int j = 0;
     unsigned int i = 0;
     int tp = 0;
-    int len = 0;
+
     
     while (i < para[0].count) {
         j = 0;
         while (j < para[1].count) {
-            len = strlen(para[1].config[j].name);
-            if (!strncmp(para[0].config[i].name, para[1].config[j].name, len)) {
+
+            if (!strcmp(para[0].config[i].name, para[1].config[j].name)) {
                 tp = 1;
                 break ;
             }
@@ -55,27 +55,30 @@ bool    comp_configFile_for_delete_config(t_superMap** superMap, t_process_para*
             i++;
             tp = 0;
         }
-        else {
-            ;
-            // stop process associer 
-            // delete process 
-            // delete config 
+        else { // DELETE OLD CONFIG CASE IN PARA
+            if (!stop_proc_superMap(superMap, para[0].config[i].name))
+                return false ;
+            para[0].config[i].numProcs = 0;
+            if (!init_proc_superMap_reload(superMap, para[0].config[i].name, &para[0].config[i]))
+                return false ;
+            if (!delete_old_para_struct_reload(&para[0], i))
+                return false ;
         }
     }
     return true ;
 }
 
 bool    comp_configFile(t_superMap** superMap, t_process_para* para, bool *reload, t_ctrl_cmds* ctrl) {
+    (void)ctrl;
     unsigned int j = 0;
     unsigned int i = 0;
     int tp = 0;
-    int len = 0;
 
     while (j < para[1].count) {
         i = 0;
         while (i < para[0].count) {
-            len = strlen(para[1].config[j].name);
-            if (!strncmp(para[0].config[i].name, para[1].config[j].name, len)) {
+
+            if (!strcmp(para[0].config[i].name, para[1].config[j].name)) {
                 
                 if (!comp_configStruct(&para[0], &para[1], i, j, reload)) {
                     if (*reload == true) {
@@ -84,8 +87,6 @@ bool    comp_configFile(t_superMap** superMap, t_process_para* para, bool *reloa
                         if (!r_init_configStruct(&para[0], &para[1], i, j))
                             return false ;
                         if (!init_proc_superMap_reload(superMap, para[1].config[j].name, &para[0].config[i]))
-                            return false ;
-                        if (!start_proc_superMap(superMap, para[1].config[j].name, para, ctrl))
                             return false ;
 
                     }
@@ -102,12 +103,12 @@ bool    comp_configFile(t_superMap** superMap, t_process_para* para, bool *reloa
             j++;
             tp = 0;
         }
-        else {
-            ;
-            // new 
-            // ajouter +1 a config de para
-            // init new process in superMap
-            // start
+        else { // NEW CONFIG CASE IN PARA 
+            if (!init_new_para_struct_reload(&para[0], &para[1], j))
+                return false ;
+            int last_pos = para[0].count - 1;
+            if (!init_proc_superMap_reload(superMap, para[1].config[j].name, &para[0].config[last_pos]))
+                return false ;
         }
     }
 
@@ -116,8 +117,7 @@ bool    comp_configFile(t_superMap** superMap, t_process_para* para, bool *reloa
 
 bool    r_init_configStruct(t_process_para* old, t_process_para* new, int i, int j) {
 
-    int len = strlen(new->config[j].cmd);
-    if (strncmp(old->config[i].cmd, new->config[j].cmd, len)) {
+    if (strcmp(old->config[i].cmd, new->config[j].cmd)) {
         if (old->config[i].cmd)
             free(old->config[i].cmd);
         old->config[i].cmd = strdup(new->config[j].cmd);
@@ -131,34 +131,50 @@ bool    r_init_configStruct(t_process_para* old, t_process_para* new, int i, int
     if (old->config[i].umask != new->config[j].umask) {
         old->config[i].umask = new->config[j].umask;
     }
-    len = strlen(new->config[j].workingDir);
-    if (strncmp(old->config[i].workingDir, new->config[j].workingDir, len)) {
+    if (strcmp(old->config[i].workingDir, new->config[j].workingDir)) {
         if (old->config[i].workingDir)
             free(old->config[i].workingDir);
         old->config[i].workingDir = strdup(new->config[j].workingDir);
         if (!old->config[i].workingDir)
             return false ;
     }
-    if (new->config[j].stdout) {
-        len = strlen(new->config[j].stdout);
-        if (strncmp(old->config[i].stdout, new->config[j].stdout, len)) {
-            if (old->config[i].stdout)
-                free(old->config[i].stdout);
+
+    if (new->config[j].stdout && !old->config[i].stdout) {
+        old->config[i].stdout = strdup(new->config[j].stdout);
+        if (!old->config[i].stdout)
+            return false ;
+    }
+    else if (new->config[j].stdout && old->config[i].stdout) {
+        if (strcmp(old->config[i].stdout, new->config[j].stdout)) {
+            free(old->config[i].stdout);
             old->config[i].stdout = strdup(new->config[j].stdout);
             if (!old->config[i].stdout)
                 return false ;
         }
     }
-    if (new->config[j].stderr) {
-        len = strlen(new->config[j].stderr);
-        if (strncmp(old->config[i].stderr, new->config[j].stderr, len)) {
-            if (old->config[i].stderr)
-                free(old->config[i].stderr);
+    else if (old->config[i].stdout) {
+        free(old->config[i].stdout);
+        old->config[i].stdout = NULL;
+    }
+
+    if (new->config[j].stderr && !old->config[i].stderr) {
+        old->config[i].stderr = strdup(new->config[j].stderr);
+        if (!old->config[i].stderr)
+            return false ;
+    }
+    else if (new->config[j].stderr && old->config[i].stderr) {
+        if (strcmp(old->config[i].stderr, new->config[j].stderr)) {
+            free(old->config[i].stderr);
             old->config[i].stderr = strdup(new->config[j].stderr);
             if (!old->config[i].stderr)
                 return false ;
         }
     }
+    else if (old->config[i].stderr) {
+        free(old->config[i].stderr);
+        old->config[i].stderr = NULL;
+    }
+
     t_config* cfg_old = &old->config[i];
     t_config* cfg_new = &new->config[j];
     if (!comp_configStruct_env(cfg_old, cfg_new)) {
@@ -169,27 +185,11 @@ bool    r_init_configStruct(t_process_para* old, t_process_para* new, int i, int
     return true ;
 }
 
-bool    start_proc_superMap(t_superMap** superMap, char *name, t_process_para* para, t_ctrl_cmds* ctrl) {
-    int len = 0;
-
-    for (int i = 0; i < g_processCount; i++) {
-        len = strlen(name);
-        if (!strncmp((*superMap)[i].name, name, len)) {
-            if (!start_cmd(&(*superMap)[i].proc, superMap, para, ctrl))
-                return false ;
-            (*superMap)[i].proc.boot_auto = true;
-        }
-    }
-    return true ;
-
-}
-
 bool    stop_proc_superMap(t_superMap** superMap, char* name) {
-    int len = 0;
 
     for (int i = 0; i < g_processCount; i++) {
-        len = strlen(name);
-        if (!strncmp((*superMap)[i].name, name, len)) {
+
+        if (!strcmp((*superMap)[i].name, name)) {
             if (!stop_cmd(&(*superMap)[i].proc))
                 return false ;
         }
@@ -198,12 +198,22 @@ bool    stop_proc_superMap(t_superMap** superMap, char* name) {
 }
 
 bool    r_init_proc_superMap(t_superMap** superMap, char* name, t_config* conf) {
-    int len = 0;
+
 
     for (int i = 0; i < g_processCount; i++) {
-        len = strlen(name);
-        if (!strncmp((*superMap)[i].name, name, len)) {
-            (*superMap)[i].proc.config = conf;
+
+        if (!strcmp((*superMap)[i].name, name)) {
+            (*superMap)[i].proc.config->autoStart = conf->autoStart;
+            (*superMap)[i].proc.config->autoRestart = conf->autoRestart;
+            
+            if ((*superMap)[i].proc.config->exitCodes.codes)
+                free((*superMap)[i].proc.config->exitCodes.codes);
+            copy_exitcode_struct(&(*superMap)[i].proc, conf);
+
+            (*superMap)[i].proc.config->startRetries = conf->startRetries;
+            (*superMap)[i].proc.config->startTime = conf->startTime;
+            (*superMap)[i].proc.config->stopSignal = conf->stopSignal;
+            (*superMap)[i].proc.config->stopTime = conf->stopTime;
         }
     }
 
@@ -214,8 +224,7 @@ bool    comp_configStruct(t_process_para* old, t_process_para* new, int i, int j
 
     bool comp = true ;
 
-    int len = strlen(new->config[j].cmd);
-    if (strncmp(old->config[i].cmd, new->config[j].cmd, len)) {
+    if (strcmp(old->config[i].cmd, new->config[j].cmd)) {
         *reload = true ;
         comp = false;
     }
@@ -227,8 +236,7 @@ bool    comp_configStruct(t_process_para* old, t_process_para* new, int i, int j
         *reload = true ;
         comp = false;
     }
-    len = strlen(new->config[j].workingDir);
-    if (strncmp(old->config[i].workingDir, new->config[j].workingDir, len)) {
+    if (strcmp(old->config[i].workingDir, new->config[j].workingDir)) {
         *reload = true ;
         comp = false;
     }
@@ -262,20 +270,29 @@ bool    comp_configStruct(t_process_para* old, t_process_para* new, int i, int j
         old->config[i].stopTime = new->config[j].stopTime;
         comp = false;
     }
-    if (new->config[j].stdout) { 
-        len = strlen(new->config[j].stdout);
-        if (strncmp(old->config[i].stdout, new->config[j].stdout, len)) {//
+    
+    if (new->config[j].stdout && old->config[i].stdout) {
+        if (strcmp(old->config[i].stdout, new->config[j].stdout)) {
             *reload = true;
             comp = false;
         }
     }
-    if (new->config[j].stderr) {
-        len = strlen(new->config[j].stderr);
-        if (strncmp(old->config[i].stderr, new->config[j].stderr, len)) {//
+    else if ((new->config[j].stdout && !old->config[i].stdout) || (!new->config[j].stdout && old->config[i].stdout)) {
+        *reload = true;
+        comp = false;
+    }
+    
+    if (new->config[j].stderr && old->config[i].stderr) { 
+        if (strcmp(old->config[i].stderr, new->config[j].stderr)) {
             *reload = true;
             comp = false;
         }
     }
+    else if ((new->config[j].stderr && !old->config[i].stderr) || (!new->config[j].stderr && old->config[i].stderr)) {
+        *reload = true;
+        comp = false;
+    }
+    
     if (!comp_configStruct_env(cfg_old, cfg_new)) {
         *reload = true;
         comp = false;
@@ -317,9 +334,9 @@ bool    swap_exitCodes_struct_in_para(t_process_para* old, t_process_para* new, 
 
     int*    tmp = NULL;
     if (new->config[j].exitCodes.count != 0) {
-        tmp = realloc(new->config[j].exitCodes.codes, sizeof(int) * (new->config[j].exitCodes.count));
+        tmp = malloc(sizeof(int) * (new->config[j].exitCodes.count));
         if (!tmp) {
-            fprintf(stderr, "Error command ctrl : allocation error (realloc)\n");
+            fprintf(stderr, "Error command ctrl : allocation error (malloc)\n");
             return false ;
         }
     }
@@ -332,6 +349,8 @@ bool    swap_exitCodes_struct_in_para(t_process_para* old, t_process_para* new, 
             return true ;
     }
 
+    memcpy(tmp, new->config[j].exitCodes.codes, sizeof(int) * (new->config[j].exitCodes.count));
+
     old->config[i].exitCodes.codes = tmp ;
     old->config[i].exitCodes.count = new->config[j].exitCodes.count;
 
@@ -342,7 +361,6 @@ bool    comp_configStruct_env(t_config* old, t_config* new) {
     unsigned int i = 0;
     unsigned int j = 0;
     int tp = 0;
-    int len = 0;
 
     if (new->count_env != old->count_env)
         return false ;
@@ -350,10 +368,8 @@ bool    comp_configStruct_env(t_config* old, t_config* new) {
     while (j < new->count_env) {
         i = 0;
         while (i < old->count_env) {
-            len = strlen(new->env[j].key);
-            if (!strncmp(old->env[i].key, new->env[j].key, len)) {
-                len = strlen(new->env[j].value);
-                if (!strncmp(old->env[i].value, new->env[j].value, len)) {
+            if (!strcmp(old->env[i].key, new->env[j].key)) {
+                if (!strcmp(old->env[i].value, new->env[j].value)) {
                     tp = 1;
                     break ;
                 }
@@ -380,7 +396,7 @@ bool    swap_env_struct_in_para(t_process_para* old, t_process_para* new, int i,
     for (size_t h = 0; h < old->config[i].count_env; h++) {
         if (old->config[i].env[h].key)
             free(old->config[i].env[h].key);
-        if (old->config[i].env[i].value)
+        if (old->config[i].env[h].value)
             free(old->config[i].env[h].value);
     }
     if (old->config[i].env) {

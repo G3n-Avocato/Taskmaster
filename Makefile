@@ -16,7 +16,8 @@ SRCS = main.c \
 		supervisor_ctrl_utils.c \
 		supervisor_ctrl_cmds.c \
 		supervisor_ctrl_reload.c \
-		supervisor_ctrl_struct_reload.c
+		supervisor_ctrl_struct_reload.c \
+		logrotate.c
 
 OBJS = $(addprefix $(OBJ_DIR)/, $(SRCS:.c=.o))
 

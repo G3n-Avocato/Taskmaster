@@ -241,3 +241,12 @@ bool    error_fork_logger(char *cmd, char *msg) {
 
     return true ;
 }
+
+bool    error_chdir_child(char *path, char* msg, char *name, int id) {
+    int len = strlen(path) + strlen(name);
+    char buffer[100 + len];
+    snprintf(buffer, sizeof(buffer), "spawn error: %s_%d  %s: %s", name, id, msg, path);
+    logger(ERRO, buffer);
+
+    return true ;
+}

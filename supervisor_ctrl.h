@@ -5,6 +5,7 @@
 # include <strings.h>
 # include <pthread.h>
 # include <termios.h>
+# include <stdatomic.h>
 
 //#define _POSIX_C_SOURCE 200112L
 #define MAX_CMD 256
@@ -16,6 +17,8 @@ extern volatile sig_atomic_t    cmd_ready;
 extern char*                    history[MAX_HISTORY];
 extern int                      histo_size;
 extern int                      histo_index;
+extern int                      histo_index;
+extern pthread_mutex_t          lock_read;
 
 extern struct termios orig_termios;
 
@@ -33,7 +36,6 @@ void    add_history(const char *cmd);
 void    call_start_cmd(t_ctrl_cmds* ctrl, t_superMap** superMap, t_process_para* para);
 void    call_stop_cmd(t_ctrl_cmds* ctrl, t_superMap** superMap);
 void    call_restart_cmd(t_ctrl_cmds* ctrl, t_superMap** superMap, t_process_para* para);
-void    call_reload_cmd(t_ctrl_cmds* ctrl, t_superMap** superMap, t_process_para* para);
 void    call_status_cmd(t_ctrl_cmds* ctrl, t_superMap** superMap);
 void    process_command(const char *cmd, t_superMap** superMap, t_process_para* para, t_ctrl_cmds* ctrl);
 void*   reader_thread(void *arg);
@@ -68,6 +70,8 @@ bool    find_group_proc_status(t_superMap** superMap, t_ctrl_cmds* ctrl);
 bool    find_all_proc_status(t_superMap** superMap);
 bool    status_cmd(t_procs* proc);
 
+bool    r_init_clear_var(t_procs* proc);
+
 // supervisor_ctrl_reload.c
 
 bool    reload_parse_configFile(t_process_para* para);
@@ -90,8 +94,9 @@ void    free_paraNew_reload_error(t_process_para *para);
 
 // supervisor_ctrl_struct_reload.c
 bool    init_proc_superMap_reload(t_superMap** superMap, char *name, t_config* conf);
-void    free_supervisor_case(t_superMap** superMap, int i);
-
+void    free_superMap_case(t_superMap** superMap, int i);
+bool    init_new_para_struct_reload(t_process_para* old, t_process_para* new, int j);
+bool    delete_old_para_struct_reload(t_process_para* old, int i);
 
 // free_process.c
 void    free_ctrl(pthread_t tid);

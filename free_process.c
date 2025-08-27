@@ -6,6 +6,9 @@ void    free_supervisor(t_superMap** superMap) {
 
         for (int i = 0; i < g_processCount; i++) {
 
+            free_config((*superMap)[i].proc.config);
+            free((*superMap)[i].proc.config);
+            
             if ((*superMap)[i].proc.exec) {
                 free((*superMap)[i].proc.exec->stdout);
                 free((*superMap)[i].proc.exec->stderr);
@@ -38,6 +41,7 @@ void    free_ctrl(pthread_t tid) {
     for (int i = 0; i < histo_size; i++) {
         free(history[i]);
     }
+    pthread_mutex_destroy(&lock_read);
 }
 
 void    free_exit_supervisor(t_superMap** superMap, t_process_para* para, pthread_t tid) {

@@ -2,32 +2,35 @@ Note Laura :
 
 
 Fait :
--> fct de comparaison pour reload le fichier et voir si changement pour relancer ou non 
-
-En cours :
-
-
+* refaire coommande reload pour qu'elle ne prenne pas d'arguments
+* ctrl -> probleme prompt -> mutex
+* passer ctrl en anglais
 * reload
 * partie reload file, il faut comparer ajouter mais aussi suprrimer des process free 
-
-
-A faire : 
-
-* ctrl -> probleme prompt -> mutex
-
-* stop double log d'exit dans supervisor.log -> booleen ctrl_cmd in waitpid pour display log (a voir si necessaire)
-
-* passer ctrl en anglais
-
-* ajouter loger fct in logger.h
+** test a faire => tester new case in struct para (new name)
+                    tester initialisation new process in superMap for new config para
+                    tester delete case oin struct para (delete name)
+                    tester delete process in superMap
 
 * revoir stdout et stderr des processus -> en cas de max output il faut pouvoir gerer ca 
 -> stdout -> creer old -> copier dans old -> efface stdout 
 -> parent verif max fichier stdout
 
+
+En cours :
+
+* ajouter loger reload fct in logger.h
+
+-> A test logrotate_loop
+
+
+A faire : 
+
+-> mutex ?? race condition dans tous les sens
+* gestion erreur et logger in command
+
 * petite verif a faire
 -> parser variable has_cmd non utiliser 
--> fct autoboot in loop verifier si pas double pid avec start et restart cmd
 
 
 TEST A FAIRE :

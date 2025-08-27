@@ -2,7 +2,9 @@
 
 bool    init_process_struct(t_procs* proc, t_config* conf, unsigned int j) {
 
-    proc->config = conf;
+
+    if (!init_config_process(proc, conf))
+        return false ;
     proc->exec = malloc(sizeof(t_execs) * 1);
     if (!proc->exec) {
         fprintf(stderr, "Error init exec : (malloc) %s\n", strerror(errno));
@@ -224,5 +226,112 @@ bool    open_file_std(t_execs* exec) {
         exec->fd_out = 1;
     if (!open_file(exec->stderr, &exec->fd_err))
         exec->fd_err = 2;
+    return true ;
+}
+
+bool    init_config_process(t_procs* proc, t_config* conf) {
+
+    proc->config = malloc(sizeof(t_config) * 1);
+    if (!proc->config) {
+        fprintf(stderr, "Error ctrl command : allocation error (realloc)\n");
+        return false ;
+    }
+
+    proc->config->name = strdup(conf->name);
+    if (!proc->config->name) {
+        fprintf(stderr, "Error ctrl command : allocation error (strdup)\n");
+        return false ;
+    }
+    proc->config->cmd = strdup(conf->cmd);
+    if (!proc->config->cmd) {
+        fprintf(stderr, "Error ctrl command : allocation error (strdup)\n");
+        return false ;
+    }
+    proc->config->has_cmd = conf->has_cmd;
+    proc->config->numProcs = conf->numProcs;
+    proc->config->umask = conf->umask;
+    proc->config->workingDir = strdup(conf->workingDir);
+    if (!proc->config->workingDir) {
+        fprintf(stderr, "Error ctrl command : allocation error (strdup)\n");
+        return false ;
+    }
+    proc->config->autoStart = conf->autoStart;
+    proc->config->autoRestart = conf->autoRestart;
+    if (!copy_exitcode_struct(proc, conf))
+        return false ;
+
+    proc->config->startRetries = conf->startRetries;
+    proc->config->startTime = conf->startTime;
+    proc->config->stopSignal = conf->stopSignal;
+    proc->config->stopTime = conf->stopTime;
+    if (conf->stdout) {
+        proc->config->stdout = strdup(conf->stdout);
+        if (!proc->config->stdout) {
+            fprintf(stderr, "Error ctrl command : allocation error (strdup)\n");
+            return false ;
+        }
+    }
+    else
+        proc->config->stdout = NULL;
+    if (conf->stderr) {
+        proc->config->stderr = strdup(conf->stderr);
+        if (!proc->config->stderr) {
+            fprintf(stderr, "Error ctrl command : allocation error (strdup)\n");
+            return false ;
+        }
+    }
+    else
+        proc->config->stderr = NULL;
+    proc->config->env = NULL;
+    proc->config->count_env = 0;
+    if (!copy_env_struct(proc, conf))
+        return false ;
+
+
+    return true ;
+}
+
+bool    copy_exitcode_struct(t_procs* proc, t_config* conf) {
+    proc->config->exitCodes.count = conf->exitCodes.count;
+
+    if (proc->config->exitCodes.count > 0) {
+        proc->config->exitCodes.codes = malloc(sizeof(int) * proc->config->exitCodes.count);
+        if (!proc->config->exitCodes.codes) {
+            fprintf(stderr, "Error init : allocation error (malloc)\n");
+            return false ;
+        }
+
+        memcpy(proc->config->exitCodes.codes, conf->exitCodes.codes, sizeof(int) * proc->config->exitCodes.count);
+    }
+    else
+        proc->config->exitCodes.codes = NULL;
+
+    return true ;
+}
+
+bool    copy_env_struct(t_procs* proc, t_config* conf) {
+    proc->config->env = malloc(sizeof(t_env_p) * conf->count_env);
+    if (!proc->config->env) {
+        fprintf(stderr, "Error init : allocation error (malloc)\n");
+        return false ;
+    }
+    proc->config->count_env = conf->count_env;
+
+    for (unsigned int i = 0; i < conf->count_env; i++) {
+        proc->config->env[i].key = strdup(conf->env[i].key);
+        proc->config->env[i].value = strdup(conf->env[i].value);
+
+        if (!proc->config->env[i].key || !proc->config->env[i].value) {
+            fprintf(stderr, "Error init : allocation error (malloc)\n");
+            for (unsigned int j = 0; j <= i; j++) {
+                free(proc->config->env[i].key);
+                free(proc->config->env[i].value);
+            }
+            free(proc->config->env);
+            proc->config->env = NULL;
+            proc->config->count_env = 0;
+            return false ;
+        }
+    }
     return true ;
 }

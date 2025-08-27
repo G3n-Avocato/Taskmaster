@@ -1,15 +1,14 @@
 # include "supervisor.h"
 
 bool    init_proc_superMap_reload(t_superMap** superMap, char *name, t_config* conf) {
-    int len = 0;
     int nump = 0;
     t_procs     current = {0};
 
     for (int i = 0; i < g_processCount; i++) {
-        len = strlen(name);
-        if (!strncmp((*superMap)[i].name, name, len)) {
+
+        if (!strcmp((*superMap)[i].name, name)) {
             if (nump < conf->numProcs) {
-                free_supervisor_case(superMap, i);
+                free_superMap_case(superMap, i);
                 current = (t_procs){0};
                 (*superMap)[i].proc = current;
                 (*superMap)[i].id = nump + 1;
@@ -20,9 +19,9 @@ bool    init_proc_superMap_reload(t_superMap** superMap, char *name, t_config* c
                 nump++;
             }
             else if (nump == conf->numProcs && (*superMap)[i].id >= nump) {
-                free_supervisor_case(superMap, i);
+                free_superMap_case(superMap, i);
                 int y;
-                for (y = i; y < g_processCount; y++) {
+                for (y = i; y < g_processCount - 1; y++) {
                     (*superMap)[y] = (*superMap)[y + 1];
                 }
                 current = (t_procs){0};
@@ -59,9 +58,11 @@ bool    init_proc_superMap_reload(t_superMap** superMap, char *name, t_config* c
     return true ;
 }
 
-void    free_supervisor_case(t_superMap** superMap, int i) {
-
+void    free_superMap_case(t_superMap** superMap, int i) {
+    free_config((*superMap)[i].proc.config);
+    free((*superMap)[i].proc.config);
     if ((*superMap)[i].proc.exec) {
+
         free((*superMap)[i].proc.exec->stdout);
         free((*superMap)[i].proc.exec->stderr);
 
@@ -78,4 +79,92 @@ void    free_supervisor_case(t_superMap** superMap, int i) {
         }
         free((*superMap)[i].proc.exec);
     }
+}
+
+bool    init_new_para_struct_reload(t_process_para* old, t_process_para* new, int j) {
+
+    t_config current = {0};
+
+    old->count++;
+    old->config = realloc(old->config, sizeof(t_config) * old->count);
+    if (!old->config) {
+        fprintf(stderr, "Error ctrl command : allocation error (realloc)\n");
+        return false ;
+    }
+
+    current = (t_config){0};
+    old->config[old->count - 1] = current;
+    old->config[old->count - 1].name = strdup(new->config[j].name);
+    if (!old->config[old->count - 1].name) {
+        fprintf(stderr, "Error ctrl command : allocation error (strdup)\n");
+        return false ;
+    }
+    
+    old->config[old->count - 1].cmd = strdup(new->config[j].cmd);
+    if (!old->config[old->count - 1].cmd) {
+        fprintf(stderr, "Error ctrl command : allocation error (strdup)\n");
+        return false ;
+    }
+    old->config[old->count - 1].has_cmd = new->config[j].has_cmd;
+    old->config[old->count - 1].numProcs = new->config[j].numProcs;
+    old->config[old->count - 1].umask = new->config[j].umask;
+    
+    old->config[old->count - 1].workingDir = strdup(new->config[j].workingDir);
+    if (!old->config[old->count - 1].workingDir) {
+        fprintf(stderr, "Error ctrl command : allocation error (strdup)\n");
+        return false ;
+    }
+    
+    old->config[old->count - 1].autoStart = new->config[j].autoStart;
+    old->config[old->count - 1].autoRestart = new->config[j].autoRestart;
+    old->config[old->count - 1].startRetries = new->config[j].startRetries;
+    old->config[old->count - 1].startTime = new->config[j].startTime;
+    old->config[old->count - 1].stopSignal = new->config[j].stopSignal;
+    old->config[old->count - 1].stopTime = new->config[j].stopTime;
+    
+    if (!swap_exitCodes_struct_in_para(old, new, old->count - 1, j))
+        return false ;
+
+    if (new->config[j].stdout) { 
+        old->config[old->count - 1].stdout = strdup(new->config[j].stdout);
+        if (!old->config[old->count - 1].stdout) {
+            fprintf(stderr, "Error ctrl command : allocation error (strdup)\n");
+            return false ;
+        }
+    }
+    else
+        old->config[old->count - 1].stdout = NULL;
+
+    if (new->config[j].stderr) { 
+        old->config[old->count - 1].stderr = strdup(new->config[j].stderr);
+        if (!old->config[old->count - 1].stderr) {
+            fprintf(stderr, "Error ctrl command : allocation error (strdup)\n");
+            return false ;
+        }
+    }
+    else
+        old->config[old->count - 1].stderr = NULL;
+
+    old->config[old->count - 1].env = NULL;
+    old->config[old->count - 1].count_env = 0;
+    if (!swap_env_struct_in_para(old, new, old->count - 1, j))
+        return false ;
+
+
+    return true ;
+}
+
+bool    delete_old_para_struct_reload(t_process_para* old, int i) {
+    if (!old || !old->config || (unsigned int)i >= old->count)
+        return false ;
+
+    free_config(&old->config[i]);
+
+    for (unsigned y = i; y < old->count - 1; y++) {
+        old->config[y] = old->config[y + 1];
+    }
+
+    old->count--;
+
+    return true ;
 }

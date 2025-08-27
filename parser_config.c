@@ -36,6 +36,8 @@ bool    parsing_name(t_process_para* para, char* val) {
     para->config[para->count - 1].stdout = NULL;
     para->config[para->count - 1].stderr = NULL;
     para->config[para->count - 1].env = NULL;
+    para->config[para->count - 1].count_env = 0;
+    
     return true ;
 }
 
@@ -94,8 +96,10 @@ bool    parser_list_options_config(char *last_key, char *val, t_config* cfg) {
         }
     }
     else {
-        fprintf(stderr, "Error config file : Parameter unknown '%s'\n", last_key);
-        return false ;
+        if (strcmp(last_key, "env")) {
+            fprintf(stderr, "Error config file : Parameter unknown '%s'\n", last_key);
+            return false ;
+        }
     }
 
     return true ;
@@ -132,15 +136,15 @@ bool    parser_autorestart(char *val, t_config* cfg) {
     char*   _fa = "false";
     char*   _un = "unexpected";
     
-    if (!strncmp(val, _tr, 5)) {
+    if (!strcmp(val, _tr)) {
         cfg->autoRestart = TRUE;
         return true ;
     }
-    else if (!strncmp(val, _fa, 6)) {
+    else if (!strcmp(val, _fa)) {
         cfg->autoRestart = FALSE;
         return true ;
     }
-    else if (!strncmp(val, _un, 11)) {
+    else if (!strcmp(val, _un)) {
         cfg->autoRestart = UNEXPECTED;
             return true ;
     }   

@@ -12,6 +12,7 @@ volatile sig_atomic_t   cmd_ready = 0;
 char*                   history[MAX_HISTORY] = {0};
 int                     histo_size = 0;
 int                     histo_index = 0;
+pthread_mutex_t         lock_read;
 
 // Terminal settings pour lire caractère par caractère
 struct termios orig_termios;
@@ -115,12 +116,19 @@ int main(int argc, char **argv) {
     //}
     ///////////////////////////////////////////////////////
 
+    if (pthread_mutex_init(&lock_read, NULL) != 0) {
+        printf("Échec de l'initialisation du mutex\n");
+        free_exit_para(para);
+        return 1;
+    }
+
     pthread_t   tid;
     t_ctrl_cmds ctrl;
 
     if (pthread_create(&tid, NULL, reader_thread, NULL) != 0) {
         perror("pthread_create");
         free_exit_para(para);
+        pthread_mutex_destroy(&lock_read);
         return 1;
     }
     ctrl_supervisor_logger();

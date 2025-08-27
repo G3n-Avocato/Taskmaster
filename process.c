@@ -68,53 +68,69 @@ bool    waitpid_monitoring_status(t_superMap** superMap) {
 }
 
 void    child_exec_proc(t_procs* proc, t_superMap** superMap, t_process_para* para, t_ctrl_cmds* ctrl) {
-    fclose(g_fdlog);
-    (void)ctrl;
     
     umask(proc->config->umask);
     if (chdir(proc->config->workingDir) < 0) {
-        perror("chdir");
+        error_chdir_child(proc->config->workingDir, strerror(errno), proc->config->name, proc->id);
+        child_close_fd(proc);
+        child_exit_error_execve(superMap, para, ctrl);
         exit(EXIT_FAILURE);
     }
     if (dup2(proc->exec->fd_out, STDOUT_FILENO) < 0) {
-        perror("dup2 stdout");
+        error_chdir_child(proc->exec->stdout, strerror(errno), proc->config->name, proc->id);
+        child_close_fd(proc);
+        child_exit_error_execve(superMap, para, ctrl);
         exit(EXIT_FAILURE);
     }
     if (dup2(proc->exec->fd_err, STDERR_FILENO) < 0) {
-        perror("dup2 stderr");
+        error_chdir_child(proc->exec->stderr, strerror(errno), proc->config->name, proc->id);
+        child_close_fd(proc);
+        child_exit_error_execve(superMap, para, ctrl);
         exit(EXIT_FAILURE);
     }
+    child_close_fd(proc);
+
+    if (execve(proc->exec->argv[0], proc->exec->argv, proc->exec->envp) == -1) {
+        fprintf(stderr, "Execve Error\n");
+        child_exit_error_execve(superMap, para, ctrl);
+        _exit(EXIT_FAILURE);
+    }
+}
+
+void    child_exit_error_execve(t_superMap** superMap, t_process_para* para, t_ctrl_cmds* ctrl) {
+    free_supervisor(superMap);
+    free_process_para(para);
+    
+    for (int i = 0; i < histo_size; i++)
+        free(history[i]);
+    
+    if (ctrl->split_cmd) {
+        for (int i = 0; i < ctrl->tab_len; i++) {
+            free(ctrl->split_cmd[i]);
+            ctrl->split_cmd[i] = NULL;
+        }
+        free(ctrl->split_cmd);
+        ctrl->split_cmd = NULL;
+    }
+    if (ctrl->name) {
+        free(ctrl->name);
+        ctrl->name = NULL;
+    }
+    if (ctrl->group) {
+        free(ctrl->group);
+        ctrl->group = NULL;
+    }
+}
+
+void    child_close_fd(t_procs* proc) {
+    fclose(g_fdlog);
 
     if (proc->exec->fd_out != 1)
         close(proc->exec->fd_out);
     if (proc->exec->fd_err != 2)
         close(proc->exec->fd_err);
-
-    if (execve(proc->exec->argv[0], proc->exec->argv, proc->exec->envp) == -1) {
-        fprintf(stderr, "Execve Error\n");
-        free_supervisor(superMap);
-        free_process_para(para);
-        for (int i = 0; i < histo_size; i++)
-            free(history[i]);
-        if (ctrl->split_cmd) {
-            for (int i = 0; i < ctrl->tab_len; i++) {
-                free(ctrl->split_cmd[i]);
-                ctrl->split_cmd[i] = NULL;
-            }
-            free(ctrl->split_cmd);
-            ctrl->split_cmd = NULL;
-        }
-        if (ctrl->name) {
-            free(ctrl->name);
-            ctrl->name = NULL;
-        }
-        if (ctrl->group) {
-            free(ctrl->group);
-            ctrl->group = NULL;
-        }
-        _exit(EXIT_FAILURE);
-    }
 }
+
 
 bool    isProcessUp(pid_t processus) {
     if (processus > 0 && kill(processus, 0) == 0)
