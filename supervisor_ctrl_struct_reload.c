@@ -16,9 +16,11 @@ bool    init_proc_superMap_reload(t_superMap** superMap, char *name, t_config* c
                     fprintf(stderr, "Error ctrl command : init process\n");
                     return false ;
                 }
+                updating_process_logger((*superMap)[i].name, (*superMap)[i].id - 1);
                 nump++;
             }
             else if (nump == conf->numProcs && (*superMap)[i].id >= nump) {
+                removing_process_logger((*superMap)[i].name, (*superMap)[i].id - 1);
                 free_superMap_case(superMap, i);
                 int y;
                 for (y = i; y < g_processCount - 1; y++) {
@@ -53,6 +55,7 @@ bool    init_proc_superMap_reload(t_superMap** superMap, char *name, t_config* c
             return false ;
         }
         nump++;
+        added_process_logger((*superMap)[g_processCount - 1].name, (*superMap)[g_processCount - 1].id - 1);
     }
 
     return true ;
@@ -105,7 +108,6 @@ bool    init_new_para_struct_reload(t_process_para* old, t_process_para* new, in
         fprintf(stderr, "Error ctrl command : allocation error (strdup)\n");
         return false ;
     }
-    old->config[old->count - 1].has_cmd = new->config[j].has_cmd;
     old->config[old->count - 1].numProcs = new->config[j].numProcs;
     old->config[old->count - 1].umask = new->config[j].umask;
     

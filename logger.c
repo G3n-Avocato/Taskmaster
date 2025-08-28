@@ -172,6 +172,14 @@ bool    exit_not_expected_process_logger(char *name, int id, int exit) {
     return true ;
 }
 
+bool    reload_config_logger() {
+    
+    char buffer[50] = "reload configuration";
+    logger(INFO, buffer);
+
+    return true ;
+}
+
 bool    config_change_logger(char *name) {
     
     int len = strlen(name);
@@ -182,15 +190,36 @@ bool    config_change_logger(char *name) {
     return true ;
 }
 
-bool    updating_process_logger(char *name) {
+bool    updating_process_logger(char *name, int id) {
     
     int len = strlen(name);
     char buffer[50 + len];
-    snprintf(buffer, sizeof(buffer), "updating process %s", name);
+    snprintf(buffer, sizeof(buffer), "updating process %s_%d", name, id);
     logger(INFO, buffer);
 
     return true ;
 }
+
+bool    removing_process_logger(char *name, int id) {
+    
+    int len = strlen(name);
+    char buffer[50 + len];
+    snprintf(buffer, sizeof(buffer), "removing process %s_%d", name, id);
+    logger(INFO, buffer);
+
+    return true ;
+}
+
+bool    added_process_logger(char *name, int id) {
+    
+    int len = strlen(name);
+    char buffer[50 + len];
+    snprintf(buffer, sizeof(buffer), "added process %s_%d", name, id);
+    logger(INFO, buffer);
+
+    return true ;
+}
+
 
 bool    fatal_state_logger(char *name, int id) {
 

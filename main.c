@@ -4,6 +4,7 @@
 int                     g_processCount = 0;
 FILE*                   g_fdlog;
 volatile sig_atomic_t   sigchld_received = 0;
+volatile sig_atomic_t   sighup_reload = 0;
 
 // global ctrl
 volatile sig_atomic_t   running = 1;
@@ -60,61 +61,65 @@ const char* enumtoString(ProcessStatus stat) {
     }
 }
 
-int main(int argc, char **argv) {
-
-    // BOOT START SUPERVISOR PARSING CONFIG 1ER + INIT STRUCT PARA 
-    t_process_para* para = NULL;
+bool    start_supervisor_parsing_init_para(int argc, char **argv, t_process_para** para) {
+    
     if (!parser_name_file(argv, argc))
-        return 1;
+        return false;
 
-    para = malloc(sizeof(t_process_para) * 2);
-    if (!para) {
+    *para = malloc(sizeof(t_process_para) * 2);
+    if (!*para) {
         fprintf(stderr, "Error parser : (malloc) %s\n", strerror(errno));
-        return 1;
+        return false;
     }
-    para[0].file_name = argv;
-    if (!init_para_null(&para[1])) {
-        free(para);
-        return 1;
+    (*para)[0].file_name = argv;
+    if (!init_para_null(&(*para)[1])) {
+        free(*para);
+        return false;
     }
-    if (!parser_file_yaml(argv[1], &para[0])) {
-        free_process_para(para);
-        return 1;
+    if (!parser_file_yaml(argv[1], &(*para)[0])) {
+        free_process_para(*para);
+        return false;
     }
 
     // OPEN LOGGER ONLY IF CONFIG FILE VALID 
     if (!open_logger_file("/tmp/Supervisor.log")) {
-        free_process_para(para);
-        return 1 ;
+        free_process_para(*para);
+        return false ;
     }
+
+    return true ;
+}
+
+bool    sig_handler_init() {
+    
+    // SIGINT HANDLER
+    if (!setup_sigint_handler()) {
+        return false ;
+    }
+    // SIGHUP HANDLER
+    if (!setup_sighup_handler()) {
+        return false ;
+    }
+    // sigchild HANDLER
+    if(!setup_sigchld_handler()) {
+        return false ;
+    }
+    return true ;
+}
+
+int main(int argc, char **argv) {
+
+    // BOOT START SUPERVISOR PARSING CONFIG 1ER + INIT STRUCT PARA 
+    t_process_para* para = NULL;
+    if (!start_supervisor_parsing_init_para(argc, argv, &para))
+        return 1;
     start_supervisor_logger();
     
-    if (!setup_sigint_handler()) {
+    // sig handler INIT
+    if (!sig_handler_init()) {
         free_exit_para(para);
         return 1;
     }
-
-    // A enlever PRINT TEST CONFIG /////////////////////////////////
-    //for (unsigned int i = 0; i < para->count; i++) {
-    //    t_config*   conf = &para->config[i];
-    //    printf("\nProgram Name : %s\n cmd : %s\n", conf->name, conf->cmd);
-    //    printf("numprocs : %d\numask : %d\n", conf->numProcs, conf->umask);
-    //    printf("workingdir : %s\nautostart : %d\n", conf->workingDir, conf->autoStart);
-    //    printf("autorestart : %s\n", printf_var(conf->autoRestart));
-    //    
-    //    t_exitcodes* cod = &conf->exitCodes;
-    //    for (unsigned int j = 0; j < cod->count; j++)
-    //        printf("exitcodes : %d\n", cod->codes[j]);
-//
-    //    printf("startRetries : %d\nstarttime : %d\n", conf->startRetries, conf->startTime);
-    //    printf("stopsignal : %s\nstoptime : %d\n", get_signal_name(conf->stopSignal), conf->stopTime);
-    //    printf("stdout : %s\nstderr : %s\n", conf->stdout, conf->stderr);
-//
-    //    t_env_p*    tmp = conf->env;
-    //    for (unsigned int h = 0; h < conf->count_env; h++)
-    //        printf("\tkey : %s\n\tvalue : %s\n", tmp[h].key, tmp[h].value);
-    //}
-    ///////////////////////////////////////////////////////
 
     if (pthread_mutex_init(&lock_read, NULL) != 0) {
         printf("Échec de l'initialisation du mutex\n");
@@ -122,9 +127,9 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    // SUPERVISOR CTRL
     pthread_t   tid;
     t_ctrl_cmds ctrl;
-
     if (pthread_create(&tid, NULL, reader_thread, NULL) != 0) {
         perror("pthread_create");
         free_exit_para(para);
@@ -146,13 +151,8 @@ int main(int argc, char **argv) {
         free_exit_supervisor(&superMap, para, tid);
         return 1 ;
     }
-    //printf_processus(&superMap);
     
     // START LOOP MAIN SUPERVISOR
-    if(!setup_sigchld_handler()) {
-        free_exit_supervisor(&superMap, para, tid);
-        return 1 ;
-    }
     if (!main_loop(&superMap, para, &ctrl)) {
         free_exit_supervisor(&superMap, para, tid);
         return 1 ;

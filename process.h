@@ -80,7 +80,5 @@ bool    copy_env_struct(t_procs* proc, t_config* conf);
 
 // process_init_utils.c
 char*   ft_itoa(int n);
-void	sigchld_handler(int sign);
-bool	setup_sigchld_handler();
 
 #endif

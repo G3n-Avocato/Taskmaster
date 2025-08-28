@@ -55,10 +55,19 @@ bool    main_loop(t_superMap** superMap, t_process_para* para, t_ctrl_cmds* ctrl
             waitpid_monitoring_status(superMap);
             sigchld_received = 0;
         }
+        if (sighup_reload) {
+            reload_cmd(superMap, para, ctrl);
+            sighup_reload = 0;
+        }
 
-        if (cmd_ready)
+        pthread_mutex_lock(&lock_read);
+        if (cmd_ready) {
+            pthread_mutex_unlock(&lock_read);
             command_ctrl(superMap, para, ctrl);
-        
+        }
+        else 
+            pthread_mutex_unlock(&lock_read);
+
         for (int i = 0; i < g_processCount; i++) {
             
             if (!autostart_boot(superMap, para, i, ctrl))
@@ -79,7 +88,7 @@ bool    main_loop(t_superMap** superMap, t_process_para* para, t_ctrl_cmds* ctrl
         }
         
         clock_gettime(CLOCK_MONOTONIC, &now);
-        if (now.tv_sec - last_check.tv_sec >= 5) {
+        if (now.tv_sec - last_check.tv_sec >= 3) {
             logRotate_loop(superMap);
             last_check = now;
         }
@@ -92,8 +101,9 @@ bool    main_loop(t_superMap** superMap, t_process_para* para, t_ctrl_cmds* ctrl
 void    command_ctrl(t_superMap** superMap, t_process_para* para, t_ctrl_cmds* ctrl) {
     
     char tmp[MAX_CMD];
-    
+    pthread_mutex_lock(&lock_read);
     strncpy(tmp, cmd_buffer, MAX_CMD);
+    pthread_mutex_unlock(&lock_read);
     tmp[MAX_CMD - 1] = '\0';
     
     cmd_ready = 0;

@@ -18,7 +18,7 @@ bool    parsing_name(t_process_para* para, char* val) {
         fprintf(stderr, "Error parser config : allocation error (strdup)\n");
         return false ;
     }
-    para->config[para->count - 1].has_cmd = false;
+    para->config[para->count - 1].cmd = NULL;
     para->config[para->count - 1].numProcs = 1;
     para->config[para->count - 1].umask = 022;
     para->config[para->count - 1].workingDir = strdup("/");
@@ -49,7 +49,6 @@ bool    parser_list_options_config(char *last_key, char *val, t_config* cfg) {
             fprintf(stderr, "Error parser config : allocation error (strdup)\n");
             return false ;
         }
-        cfg->has_cmd = true;
     }
     else if (!strcmp(last_key, "numprocs"))
         return (parser_numprocs(val, cfg));

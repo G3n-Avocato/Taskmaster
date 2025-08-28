@@ -247,7 +247,6 @@ bool    init_config_process(t_procs* proc, t_config* conf) {
         fprintf(stderr, "Error ctrl command : allocation error (strdup)\n");
         return false ;
     }
-    proc->config->has_cmd = conf->has_cmd;
     proc->config->numProcs = conf->numProcs;
     proc->config->umask = conf->umask;
     proc->config->workingDir = strdup(conf->workingDir);

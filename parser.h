@@ -31,7 +31,6 @@ typedef struct exitcodes {
 typedef struct s_config {
     char*                               name;
     char*                               cmd;
-    bool                                has_cmd;
     int                                 numProcs;
     int                                 umask;
     char*                               workingDir;

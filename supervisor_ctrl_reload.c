@@ -19,21 +19,23 @@ bool    reload_parse_configFile(t_process_para* para) {
 bool    reload_cmd(t_superMap** superMap, t_process_para* para, t_ctrl_cmds* ctrl) {
 
     bool    reload = false;
+    bool    change = false;
+    reload_config_logger();
 
     if (!reload_parse_configFile(para)) {
         return false ;
     }
-    if (!comp_configFile(superMap, para, &reload, ctrl)) {
+    if (!comp_configFile(superMap, para, &reload, &change, ctrl)) {
         return false ;
     }
-    if (!comp_configFile_for_delete_config(superMap, para)) {
+    if (!comp_configFile_for_delete_config(superMap, para, &change)) {
         return false ;
     }
 
     return true ;
 }
 
-bool    comp_configFile_for_delete_config(t_superMap** superMap, t_process_para* para) {
+bool    comp_configFile_for_delete_config(t_superMap** superMap, t_process_para* para, bool* change) {
     (void)superMap;
     unsigned int j = 0;
     unsigned int i = 0;
@@ -56,6 +58,10 @@ bool    comp_configFile_for_delete_config(t_superMap** superMap, t_process_para*
             tp = 0;
         }
         else { // DELETE OLD CONFIG CASE IN PARA
+            if (*change == false) {
+                config_change_logger(para[0].file_name[1]);
+                *change = true;
+            }
             if (!stop_proc_superMap(superMap, para[0].config[i].name))
                 return false ;
             para[0].config[i].numProcs = 0;
@@ -68,7 +74,7 @@ bool    comp_configFile_for_delete_config(t_superMap** superMap, t_process_para*
     return true ;
 }
 
-bool    comp_configFile(t_superMap** superMap, t_process_para* para, bool *reload, t_ctrl_cmds* ctrl) {
+bool    comp_configFile(t_superMap** superMap, t_process_para* para, bool *reload, bool *change, t_ctrl_cmds* ctrl) {
     (void)ctrl;
     unsigned int j = 0;
     unsigned int i = 0;
@@ -81,6 +87,10 @@ bool    comp_configFile(t_superMap** superMap, t_process_para* para, bool *reloa
             if (!strcmp(para[0].config[i].name, para[1].config[j].name)) {
                 
                 if (!comp_configStruct(&para[0], &para[1], i, j, reload)) {
+                    if (*change == false) {
+                        config_change_logger(para[0].file_name[1]);
+                        *change = true;
+                    }
                     if (*reload == true) {
                         if (!stop_proc_superMap(superMap, para[1].config[j].name))
                             return false ;
@@ -92,6 +102,7 @@ bool    comp_configFile(t_superMap** superMap, t_process_para* para, bool *reloa
                     }
                     else 
                         r_init_proc_superMap(superMap, para[1].config[j].name, &para[0].config[i]);
+                
                 }
                 tp = 1;
                 break ;
@@ -104,6 +115,10 @@ bool    comp_configFile(t_superMap** superMap, t_process_para* para, bool *reloa
             tp = 0;
         }
         else { // NEW CONFIG CASE IN PARA 
+            if (*change == false) {
+                config_change_logger(para[0].file_name[1]);
+                *change = true;
+            }
             if (!init_new_para_struct_reload(&para[0], &para[1], j))
                 return false ;
             int last_pos = para[0].count - 1;
@@ -214,6 +229,7 @@ bool    r_init_proc_superMap(t_superMap** superMap, char* name, t_config* conf) 
             (*superMap)[i].proc.config->startTime = conf->startTime;
             (*superMap)[i].proc.config->stopSignal = conf->stopSignal;
             (*superMap)[i].proc.config->stopTime = conf->stopTime;
+            updating_process_logger((*superMap)[i].name, (*superMap)[i].id - 1);
         }
     }
 

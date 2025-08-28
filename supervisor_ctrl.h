@@ -41,8 +41,6 @@ void    process_command(const char *cmd, t_superMap** superMap, t_process_para* 
 void*   reader_thread(void *arg);
 
 // supervisor_ctrl_utils.c
-void        handle_sigint(int sig);
-bool	    setup_sigint_handler();
 const char* ProcessStatus_toString(ProcessStatus stat);
 char*       ft_substr(char const *s, unsigned int start, size_t len);
 int         ft_pointer_tab_len(char **ptr);
@@ -76,8 +74,8 @@ bool    r_init_clear_var(t_procs* proc);
 
 bool    reload_parse_configFile(t_process_para* para);
 bool    reload_cmd(t_superMap** superMap, t_process_para* para, t_ctrl_cmds* ctrl);
-bool    comp_configFile_for_delete_config(t_superMap** superMap, t_process_para* para);
-bool    comp_configFile(t_superMap** superMap, t_process_para* para, bool *reload, t_ctrl_cmds* ctrl);
+bool    comp_configFile_for_delete_config(t_superMap** superMap, t_process_para* para, bool* change);
+bool    comp_configFile(t_superMap** superMap, t_process_para* para, bool *reload, bool* change, t_ctrl_cmds* ctrl);
 
 bool    r_init_configStruct(t_process_para* old, t_process_para* new, int i, int j);
 bool    start_proc_superMap(t_superMap** superMap, char *name, t_process_para* para, t_ctrl_cmds* ctrl);

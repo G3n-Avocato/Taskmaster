@@ -2,35 +2,25 @@ Note Laura :
 
 
 Fait :
-* refaire coommande reload pour qu'elle ne prenne pas d'arguments
-* ctrl -> probleme prompt -> mutex
-* passer ctrl en anglais
-* reload
-* partie reload file, il faut comparer ajouter mais aussi suprrimer des process free 
-** test a faire => tester new case in struct para (new name)
-                    tester initialisation new process in superMap for new config para
-                    tester delete case oin struct para (delete name)
-                    tester delete process in superMap
-
-* revoir stdout et stderr des processus -> en cas de max output il faut pouvoir gerer ca 
--> stdout -> creer old -> copier dans old -> efface stdout 
--> parent verif max fichier stdout
-
+* petite verif a faire
+-> parser variable has_cmd non utiliser 
+-> mutex ?? race condition dans tous les sens
+* ajouter loger reload fct in logger.h
+-> A test sighup gestion signal
 
 En cours :
-
-* ajouter loger reload fct in logger.h
 
 -> A test logrotate_loop
 
 
+* gestion erreur et logger in command
+-> fichier parsing logger gestion erreur a revoir sur tout le projet
+
 A faire : 
 
--> mutex ?? race condition dans tous les sens
-* gestion erreur et logger in command
+* parsing ajouter une verif pour le meme nom (saucisse: saucisse: comportement aleatoire)(pas tres beau)
 
-* petite verif a faire
--> parser variable has_cmd non utiliser 
+* ranger un peu 
 
 
 TEST A FAIRE :

@@ -5,6 +5,7 @@
 #include "process.h"
 #include "logger.h"
 #include "supervisor_ctrl.h"
+#include "signal_handler.h"
 
 #include <sys/stat.h>
 #include <sys/sendfile.h>
@@ -13,6 +14,7 @@
 
 extern int                      g_processCount;
 extern volatile sig_atomic_t    sigchld_received;
+extern volatile sig_atomic_t    sighup_reload;
 
 // supervisor.c
 bool    init_supervisor_processMap(t_process_para* para, t_superMap** superMap);

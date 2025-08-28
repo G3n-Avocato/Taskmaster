@@ -29,6 +29,7 @@ void    parent_exec_proc(t_procs* proc) {
 
     if (isProcessUp(proc->processus))
         proc->start_run = time(NULL);
+    
     proc->state = STARTING;
     start_process_logger(proc->config->name, proc->id, proc->processus);
 }
@@ -55,9 +56,6 @@ bool    waitpid_monitoring_status(t_superMap** superMap) {
                     if (!(*superMap)[i].proc.exit_code)
                         exit_not_expected_process_logger((*superMap)[i].name, (*superMap)[i].id - 1, WEXITSTATUS(status));
                 }
-                //if (WIFSIGNALED(status)) {
-                //    ;
-                //}
                 (*superMap)[i].proc.state = EXITED;
                 break ;
             }

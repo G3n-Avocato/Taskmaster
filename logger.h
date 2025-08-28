@@ -31,8 +31,12 @@ bool    stopped_process_signal_logger(char *name, int id, int sign);
 bool    wait_stop_process_logger(char *name, int id);
 bool    exit_expected_process_logger(char *name, int id, int exit);
 bool    exit_not_expected_process_logger(char *name, int id, int exit);
-bool    config_change_logger(char *name); // a inclure in reload
-bool    updating_process_logger(char *name);  // a inclure in reload
+bool    reload_config_logger();
+bool    config_change_logger(char *name);
+bool    updating_process_logger(char *name, int id);
+bool    removing_process_logger(char *name, int id);
+bool    added_process_logger(char *name, int id);
+
 bool    fatal_state_logger(char *name, int id);
 bool    fatal_logger(char *name, int id);
 bool    error_sigkill_logger(char *name, int id, int pid, char* msg);

@@ -186,7 +186,7 @@ bool    restart_cmd(t_procs* proc, t_superMap** superMap, t_process_para* para, 
 
     return true ;
 }
-///////////////////////--------------------------> mutex 
+
 /* STOP */
 bool    find_name_proc_stop(t_superMap** superMap, t_ctrl_cmds* ctrl) {
     int id_p;

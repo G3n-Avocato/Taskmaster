@@ -1,33 +1,5 @@
 # include "supervisor.h"
 
-// Handler Ctrl+C
-void handle_sigint(int sig) {
-
-    running = 0;
-    if (sig == SIGINT)
-        write(STDOUT_FILENO, "\n→ Ctrl+C received : stop...\n", 31);
-    else if (sig == SIGQUIT)
-        write(STDOUT_FILENO, "\n→ Ctrl+\\ received : quit...\n", 31);
-}
-
-bool	setup_sigint_handler() {
-	struct sigaction saa;
-	saa.sa_handler = handle_sigint;
-	sigemptyset(&saa.sa_mask);
-	saa.sa_flags = 0;
-    //saa.sa_flags = SA_RESTART;
-
-	if (sigaction(SIGINT, &saa, NULL) == -1) {
-		perror("sigaction SIGINT");
-		return false ;
-	}
-    if (sigaction(SIGQUIT, &saa, NULL) == -1) {
-        perror("sigaction SIGQUIT");
-        return false ;
-    }
-	return true ;
-}
-
 const char* ProcessStatus_toString(ProcessStatus stat) {
     switch (stat) {
         case STOPPED: return "STOPPED";
@@ -92,16 +64,21 @@ char ** split(const char* str, char sep)
     {
         if (str[i] == sep)
         {
-            char ** new_ret = calloc(sizeof( char*), ft_pointer_tab_len(ret)+2);
-            j = 0;
-            while (ret[j])
+            
+            if ( i - cursor > 0)
             {
-                new_ret[j] = ret[j];
-                j++;
+                char ** new_ret = calloc(sizeof( char*), ft_pointer_tab_len(ret)+2);
+
+                j = 0;
+                while (ret[j])
+                {
+                    new_ret[j] = ret[j];
+                    j++;
+                }
+                new_ret[j] = ft_substr(str, cursor, i-cursor);
+                free (ret);
+                ret = new_ret;
             }
-            new_ret[j] = ft_substr(str, cursor, i-cursor);
-            free (ret);
-            ret = new_ret;
             while (str[i] == sep && str[i])
                 i++;
             cursor = i;

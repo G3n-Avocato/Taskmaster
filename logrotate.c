@@ -9,6 +9,15 @@ off_t   get_file_size(const char *file) {
     return -1;
 }
 
+int     truncate_file(const char *path) {
+    off_t size = get_file_size(path);
+    printf(">> Truncating %s to size %ld\n", path, size);
+    if (truncate(path, 0) < 0) {
+        return false ;
+    }
+    return true ;
+}
+
 bool     copy_file(const char *path, const char *new) {
     int src_fd = open(path, O_RDONLY);
     if (src_fd < 0)
@@ -18,8 +27,10 @@ bool     copy_file(const char *path, const char *new) {
         close(src_fd);
         return false ;
     }
-    struct stat st;
+    if (get_file_size(new) > MAX_SIZE_STD_FILE)
+        truncate_file(new);
 
+    struct stat st;
     if (fstat(src_fd, &st) < 0) {
         close(src_fd);
         close(dst_fd);
@@ -33,19 +44,12 @@ bool     copy_file(const char *path, const char *new) {
     return true ;
 }
 
-int     truncate_file(const char *path) {
-    if (truncate(path, 0) < 0) {
-        return false ;
-    }
-    return true ;
-}
-
 char* build_old_stdFile(const char* path) {
 
     char*   old = ".old";
     size_t len = strlen(path) + strlen(old);
 
-    char *tmp = malloc(sizeof(char) * len);
+    char *tmp = malloc(sizeof(char) * (len + 1));
     if (!tmp)
         return NULL;
     strcpy(tmp, path);

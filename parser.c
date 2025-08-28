@@ -1,13 +1,17 @@
 # include "supervisor.h"
 
 bool    parser_name_file(char **argv, int argc) {
-    const char* tmp = strrchr(argv[1], '.');
 
-    if (argc != 2 || !tmp) {
+    if (argc != 2) {
         fprintf(stderr, "Wrong config file\n");
         return false ;
     }
-
+    
+    const char* tmp = strrchr(argv[1], '.');
+    if (!tmp) {
+        fprintf(stderr, "Wrong config file\n");
+        return false ;
+    }
     if (strcmp(tmp, ".yaml") != 0) {
         if (strcmp(tmp, ".yml") != 0) {
             fprintf(stderr, "Wrong type for config file\n");

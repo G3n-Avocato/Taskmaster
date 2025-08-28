@@ -43,7 +43,9 @@ void call_start_cmd(t_ctrl_cmds* ctrl, t_superMap** superMap, t_process_para* pa
             char *arg = ctrl->split_cmd[i];
             if (arg[0] == ':')
             {
+                pthread_mutex_lock(&lock_read);
                 printf("→ Start Error name arg : %s\n",ctrl->split_cmd[i]);
+                pthread_mutex_unlock(&lock_read);
             }
             else
             {
@@ -55,7 +57,9 @@ void call_start_cmd(t_ctrl_cmds* ctrl, t_superMap** superMap, t_process_para* pa
                         {
                             free(ctrl->group);
                             ctrl->group = NULL;
+                            pthread_mutex_lock(&lock_read);
                             printf("→ Start Error name arg : %s\n",ctrl->split_cmd[i]);
+                            pthread_mutex_unlock(&lock_read);
                             break;
                         }
                         ctrl->group = ft_substr(ctrl->split_cmd[i], cursor, j-cursor);
@@ -107,7 +111,9 @@ void call_stop_cmd(t_ctrl_cmds* ctrl, t_superMap** superMap)
             char *arg = ctrl->split_cmd[i];
             if (arg[0] == ':')
             {
+                pthread_mutex_lock(&lock_read);
                 printf("→ Stop Error name arg : %s\n",ctrl->split_cmd[i]);
+                pthread_mutex_unlock(&lock_read);
             }
             else
             {
@@ -119,7 +125,9 @@ void call_stop_cmd(t_ctrl_cmds* ctrl, t_superMap** superMap)
                         {
                             free(ctrl->group);
                             ctrl->group = NULL;
+                            pthread_mutex_lock(&lock_read);
                             printf("→ Stop Error name arg : %s\n",ctrl->split_cmd[i]);
+                            pthread_mutex_unlock(&lock_read);
                             break;
                         }
                         ctrl->group = ft_substr(ctrl->split_cmd[i], cursor, j-cursor);
@@ -171,7 +179,9 @@ void call_restart_cmd(t_ctrl_cmds* ctrl, t_superMap** superMap, t_process_para* 
             char *arg = ctrl->split_cmd[i];
             if (arg[0] == ':')
             {
+                pthread_mutex_lock(&lock_read);
                 printf("→ Restart Error name arg : %s\n",ctrl->split_cmd[i]);
+                pthread_mutex_unlock(&lock_read);
             }
             else
             {
@@ -183,7 +193,9 @@ void call_restart_cmd(t_ctrl_cmds* ctrl, t_superMap** superMap, t_process_para* 
                         {
                             free(ctrl->group);
                             ctrl->group = NULL;
+                            pthread_mutex_lock(&lock_read);
                             printf("→ Restart Error name arg : %s\n",ctrl->split_cmd[i]);
+                            pthread_mutex_unlock(&lock_read);
                             break;
                         }
                         ctrl->group = ft_substr(ctrl->split_cmd[i], cursor, j-cursor);
@@ -235,7 +247,9 @@ void call_status_cmd(t_ctrl_cmds* ctrl, t_superMap** superMap)
             char *arg = ctrl->split_cmd[i];
             if (arg[0] == ':')
             {
+                pthread_mutex_lock(&lock_read);
                 printf("→ Status Error name arg : %s\n",ctrl->split_cmd[i]);
+                pthread_mutex_unlock(&lock_read);
             }
             else
             {
@@ -247,7 +261,9 @@ void call_status_cmd(t_ctrl_cmds* ctrl, t_superMap** superMap)
                         {
                             free(ctrl->group);
                             ctrl->group = NULL;
+                            pthread_mutex_lock(&lock_read);
                             printf("→ Status Error name arg : %s\n",ctrl->split_cmd[i]);
+                            pthread_mutex_unlock(&lock_read);
                             break;
                         }
                         ctrl->group = ft_substr(ctrl->split_cmd[i], cursor, j-cursor);
@@ -281,25 +297,38 @@ void call_status_cmd(t_ctrl_cmds* ctrl, t_superMap** superMap)
 
 // Traitement de la commande
 void process_command(const char *cmd, t_superMap** superMap, t_process_para* para, t_ctrl_cmds* ctrl) {
+    
+    pthread_mutex_lock(&lock_read);
     printf("\nOrder processing : %s\n", cmd);
+    pthread_mutex_unlock(&lock_read);
+
     ctrl->split_cmd = split(cmd,' ');
     if (!ctrl->split_cmd)
         return;
+    if (!ctrl->split_cmd[0]) {
+        free(ctrl->split_cmd);
+        return;
+    }
     ctrl->tab_len = ft_pointer_tab_len(ctrl->split_cmd);
     if (strcmp(ctrl->split_cmd[0], "start") == 0) {
         call_start_cmd(ctrl, superMap, para);
     } else if (strcmp(ctrl->split_cmd[0], "quit") == 0) {
+        pthread_mutex_lock(&lock_read);
         if (ctrl->tab_len > 1)
             printf("→ Invalid command.\n");
         else {
             printf("→ Request for stop.\n");
             running = 0;
         }
+        pthread_mutex_unlock(&lock_read);
     }  else if (strcmp(ctrl->split_cmd[0], "stop") == 0) {
         call_stop_cmd(ctrl, superMap);
     }  else if (strcmp(ctrl->split_cmd[0], "reload") == 0) {
-        if (ctrl->tab_len > 1)
+        if (ctrl->tab_len > 1) {
+            pthread_mutex_lock(&lock_read);
             printf("→ Invalid command.\n");
+            pthread_mutex_unlock(&lock_read);
+        }
         else
             reload_cmd(superMap, para, ctrl);
     }  else if (strcmp(ctrl->split_cmd[0], "status") == 0) {
@@ -307,7 +336,9 @@ void process_command(const char *cmd, t_superMap** superMap, t_process_para* par
     }  else if (strcmp(ctrl->split_cmd[0], "restart") == 0) {
         call_restart_cmd(ctrl, superMap, para);
     } else {
+        pthread_mutex_lock(&lock_read);
         printf("→ Unknown command.\n");
+        pthread_mutex_unlock(&lock_read);
     }
     for (int i = 0; ctrl->split_cmd[i];i++) {
         free (ctrl->split_cmd[i]);
