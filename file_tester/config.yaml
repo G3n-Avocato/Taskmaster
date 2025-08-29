@@ -1,0 +1,37 @@
+programs:
+  sleep:
+    cmd: "/bin/sleep 10"
+    numprocs: 1
+    umask: 022
+    workingdir: /tmp
+    autostart: true
+    autorestart: true
+    exitcodes: 
+      - 0
+      - 2
+    startretries: 5
+    starttime: 4
+    stopsignal: TERM
+    stoptime: 10
+    env:
+      STARTED_BY: taskmaster
+      SDSDS: shdhhsd
+  saucisse:
+    cmd: "/bin/sleep 3"
+    numprocs: 5
+    umask: 022
+    workingdir: /tmp
+    autostart: false 
+    autorestart: true
+    exitcodes: 
+      - 1
+      - 2
+      - 3
+      - 4
+    startretries: 2
+    starttime: 4
+    stopsignal: TERM
+    stoptime: 6
+    stdout: "/tmp/saucisse"
+    env:
+      STARTED_BY: taskmaster

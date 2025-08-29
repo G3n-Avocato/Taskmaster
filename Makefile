@@ -2,23 +2,25 @@ NAME = Supervisor
 
 OBJ_DIR = obj
 
-SRCS = main.c \
-		parser.c \
-		parser_config.c \
-		supervisor.c \
-		process.c \
-		process_init.c \
-		process_init_utils.c \
-		free_process.c \
-		free_parser.c \
-		logger.c \
-		supervisor_ctrl.c \
-		supervisor_ctrl_utils.c \
-		supervisor_ctrl_cmds.c \
-		supervisor_ctrl_reload.c \
-		supervisor_ctrl_struct_reload.c \
-		logrotate.c \
-		signal_handler.c
+SRCS = supervisor/main.c \
+		parser_boot/parser.c \
+		parser_boot/parser_config.c \
+		supervisor/supervisor.c \
+		process/process.c \
+		process/process_init.c \
+		process/process_init_utils.c \
+		process/free_process.c \
+		parser_boot/free_parser.c \
+		supervisor/logger.c \
+		supervisor_ctrl/supervisor_ctrl.c \
+		supervisor_ctrl/supervisor_ctrl_utils.c \
+		supervisor_ctrl/supervisor_ctrl_cmds.c \
+		supervisor_ctrl_reload/supervisor_ctrl_reload.c \
+		supervisor_ctrl_reload/supervisor_ctrl_struct_reload.c \
+		supervisor_ctrl_reload/reload_parser.c \
+		supervisor_ctrl_reload/reload_parser_config.c \
+		supervisor/logrotate.c \
+		parser_boot/signal_handler.c 
 
 OBJS = $(addprefix $(OBJ_DIR)/, $(SRCS:.c=.o))
 

@@ -1,0 +1,20 @@
+programs:
+  test_init:
+    cmd: "/bin/ls"
+  nginx:
+    cmd: "/usr/local/bin/nginx -c /etc/nginx/test.conf"
+    numprocs: 3
+    umask: 066
+    workingdir: /tmp
+    autostart: false
+    autorestart: true
+    exitcodes: 3
+    startretries: 8
+    starttime: 7
+    stopsignal: USR1
+    stoptime: 15
+    stdout: /tmp/nginx.stdout
+    stderr: /tmp/nginx.stderr
+    env:
+        STARTED_BY: taskmaster
+        ANSWER: 42
